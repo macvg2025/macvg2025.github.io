@@ -25,76 +25,107 @@
     <iframe src="https://macvg2025.github.io/macvg"></iframe>
     <script>
   (function() {
-      const redirectUrl = "https://issaquah.instructure.com/";
+  const regularStart = { h: 8, m: 0 };
+  const regularEnd   = { h: 14, m: 40 };
+  const wedStart     = { h: 10, m: 20 };
+  const wedEnd       = { h: 15, m: 40 };
+  const redirectUrl  = "https://issaquah.instructure.com/";
 
-      function createModal() {
-        const overlay = document.createElement("div");
-        Object.assign(overlay.style, {
-          position: "fixed", inset: "0",
-          background: "rgba(0,0,0,0.75)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: "2147483647", fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, Arial",
-          color: "#fff", padding: "20px", boxSizing: "border-box"
-        });
+  function minutesSinceMidnight(d) {
+    return d.getHours() * 60 + d.getMinutes();
+  }
 
-        const card = document.createElement("div");
-        Object.assign(card.style, {
-          maxWidth: "520px", width: "100%", background: "#111",
-          borderRadius: "12px", padding: "22px",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.6)", textAlign: "center"
-        });
+  function isSchoolTime(now) {
+    const day = now.getDay();
+    if (day === 0 || day === 6) return false;
+    const mins = minutesSinceMidnight(now);
+    if (day === 3) {
+      const s = wedStart.h * 60 + wedStart.m;
+      const e = wedEnd.h * 60 + wedEnd.m;
+      return mins >= s && mins <= e;
+    } else {
+      const s = regularStart.h * 60 + regularStart.m;
+      const e = regularEnd.h * 60 + regularEnd.m;
+      return mins >= s && mins <= e;
+    }
+  }
 
-        const title = document.createElement("h2");
-        title.textContent = "This site is blocked during school hours";
-        Object.assign(title.style, { margin: "0 0 12px", fontSize: "20px" });
+  function createModal() {
+    const overlay = document.createElement("div");
+    Object.assign(overlay.style, {
+      position: "fixed", inset: "0",
+      background: "rgba(0,0,0,0.75)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      zIndex: "2147483647", fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial",
+      color: "#fff", padding: "20px", boxSizing: "border-box"
+    });
 
-        const msg = document.createElement("p");
-        msg.innerHTML = "Type <strong>sorry</strong> below to apologize.<br><small>(Mon–Fri 08:00–14:40; Wed 10:20–15:40)</small>";
-        Object.assign(msg.style, { margin: "8px 0 18px", color: "#ddd" });
+    const card = document.createElement("div");
+    Object.assign(card.style, {
+      maxWidth: "520px", width: "100%", background: "#111",
+      borderRadius: "12px", padding: "22px", boxSizing: "border-box",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.6)", textAlign: "center"
+    });
 
-        const input = document.createElement("input");
-        input.type = "text";
-        input.placeholder = "Type sorry to apologize";
-        Object.assign(input.style, {
-          width: "100%", padding: "10px 12px", fontSize: "16px",
-          borderRadius: "8px", border: "1px solid rgba(255,255,255,0.12)",
-          background: "#0f0f0f", color: "#fff", outline: "none"
-        });
+    const title = document.createElement("h2");
+    title.textContent = "This site is blocked during school hours";
+    Object.assign(title.style, { margin: "0 0 12px", fontSize: "20px", lineHeight: "1.2" });
 
-        const btn = document.createElement("button");
-        btn.textContent = "Submit";
-        Object.assign(btn.style, {
-          marginTop: "12px", padding: "10px 16px", fontSize: "15px",
-          borderRadius: "8px", border: "none", cursor: "pointer",
-          background: "#147efb", color: "#fff"
-        });
+    const msg = document.createElement("p");
+    msg.innerHTML = "It's school time. Type <strong>sorry</strong> below to apologize.<br><small>(Mon–Fri 08:00–14:40; Wed 10:20–15:40)</small>";
+    Object.assign(msg.style, { margin: "8px 0 18px", color: "#ddd" });
 
-        card.appendChild(title);
-        card.appendChild(msg);
-        card.appendChild(input);
-        card.appendChild(btn);
-        overlay.appendChild(card);
-        document.body.appendChild(overlay);
+    const input = document.createElement("input");
+    input.type = "text";
+    input.placeholder = "Type sorry to apologize";
+    Object.assign(input.style, {
+      width: "100%", padding: "10px 12px", fontSize: "16px",
+      borderRadius: "8px", border: "1px solid rgba(255,255,255,0.12)",
+      background: "#0f0f0f", color: "#fff", outline: "none", boxSizing: "border-box"
+    });
 
-        input.focus();
+    const btn = document.createElement("button");
+    btn.textContent = "Submit";
+    Object.assign(btn.style, {
+      marginTop: "12px", padding: "10px 16px", fontSize: "15px",
+      borderRadius: "8px", border: "none", cursor: "pointer",
+      background: "#147efb", color: "#fff"
+    });
 
-        function alwaysRedirect() {
-          window.location.href = redirectUrl;
-        }
+    card.appendChild(title);
+    card.appendChild(msg);
+    card.appendChild(input);
+    card.appendChild(btn);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
 
-        btn.addEventListener("click", alwaysRedirect);
-        input.addEventListener("keydown", function(e) {
-          if (e.key === "Enter") alwaysRedirect();
-        });
-      }
+    input.focus();
 
-      // Run immediately, no time check
-      if (document.readyState === "complete" || document.readyState === "interactive") {
-        createModal();
-      } else {
-        document.addEventListener("DOMContentLoaded", createModal);
-      }
-    })();
+    function alwaysRedirect() {
+      window.location.href = redirectUrl;
+    }
+
+    btn.addEventListener("click", alwaysRedirect);
+    input.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") alwaysRedirect();
+    });
+  }
+
+  function boot() {
+    try {
+      const now = new Date();
+      if (isSchoolTime(now)) createModal();
+    } catch (err) {
+      console.error("School-block script error:", err);
+    }
+  }
+
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    setTimeout(boot, 0);
+  } else {
+    document.addEventListener("DOMContentLoaded", boot);
+  }
+})();
 
     </script>
 </body>
