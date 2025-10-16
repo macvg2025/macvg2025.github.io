@@ -273,7 +273,7 @@
       <div class="subgate-text">It looks like the subscription didn't go through. Try clicking Subscribe again - or subscribe if you haven't yet.</div>
       <div class="subgate-buttons">
         <button class="subgate-btn subscribe" id="sg-sub2">Subscribe Again</button>
-        <button class="subgate-btn continue" id="sg-cont">Continue</button>
+        
       </div>
     `;
     overlay.appendChild(modal);
@@ -286,11 +286,7 @@
       closeModalAndStartTimer();
     });
 
-    modal.querySelector("#sg-cont").addEventListener("click", () => {
-      // Let them in without subscribing
-      setLastCheck();
-      closeModalAndStartTimer();
-    });
+    
   }
 
   function closeModalAndStartTimer() {
