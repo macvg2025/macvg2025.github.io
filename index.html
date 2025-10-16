@@ -24,6 +24,307 @@
 <body>
     <iframe src="https://macvg2025.github.io/macvg"></iframe>
     <script>
+// Paste this as a single <script> at the end of your <body> or in an external .js file.
+// It injects all HTML/CSS and handles the two-stage fake YouTube-sub popup + 3-day recheck + top-center timer.
+// Channel: https://www.youtube.com/channel/UC6-3o47fbPwzq6uMC6977iw
+
+(function () {
+  const CHANNEL_URL = "https://www.youtube.com/channel/UC6-3o47fbPwzq6uMC6977iw";
+  const STORAGE_KEY = "lastSubCheck";
+  const LOCK_KEY = "subGatePassed"; // not strictly necessary but keeps intent clear
+  const RECHECK_MS = 72 * 60 * 60 * 1000; // 72 hours
+  const TIMER_ID = "subgate-timer";
+  const OVERLAY_ID = "subgate-overlay";
+
+  /* ---------- inject styles ---------- */
+  const css = `
+  /* Popup overlay + modal */
+  #${OVERLAY_ID} {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999999;
+    backdrop-filter: blur(3px);
+  }
+  .subgate-modal {
+    width: clamp(260px, 42vw, 520px);
+    max-width: 92%;
+    background: #0f1113;
+    color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 6px 30px rgba(0,0,0,0.6), 0 0 0 4px rgba(255,140,0,0.03);
+    padding: 18px;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+  .subgate-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #ffb06b;
+  }
+  .subgate-text {
+    font-size: 13px;
+    margin-bottom: 14px;
+    color: #d6d6d6;
+    line-height: 1.25;
+  }
+  .subgate-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+  .subgate-btn {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    min-width: 100px;
+    font-size: 13px;
+  }
+  .subgate-btn.subscribe {
+    background: linear-gradient(180deg, #ff7a00, #ff5c00);
+    color: white;
+    box-shadow: 0 6px 18px rgba(255,92,0,0.18);
+  }
+  .subgate-btn.continue {
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+
+  /* tiny top-center timer */
+  #${TIMER_ID} {
+    position: fixed;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999998;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(15,17,19,0.9);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.03);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 8px rgba(255,140,0,0.05);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.2px;
+  }
+  #${TIMER_ID} .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ff8c00;
+    box-shadow: 0 0 8px rgba(255,140,0,0.45);
+    flex: none;
+  }
+
+  /* small responsive tweaks */
+  @media (max-width: 420px) {
+    .subgate-modal { padding: 14px; }
+    .subgate-title { font-size: 15px; }
+    .subgate-text { font-size: 12px; }
+    .subgate-btn { min-width: 86px; padding: 7px 10px; font-size: 12px; }
+  }
+  `;
+  const style = document.createElement("style");
+  style.innerHTML = css;
+  document.head.appendChild(style);
+
+  /* ---------- utility ---------- */
+  function setLastCheck(ts = Date.now()) {
+    localStorage.setItem(STORAGE_KEY, String(ts));
+    localStorage.setItem(LOCK_KEY, "true");
+  }
+
+  function getLastCheck() {
+    const v = localStorage.getItem(STORAGE_KEY);
+    return v ? Number(v) : null;
+  }
+
+  function passedRecently() {
+    const last = getLastCheck();
+    if (!last) return false;
+    return (Date.now() - last) < RECHECK_MS;
+  }
+
+  function timeUntilNextCheck() {
+    const last = getLastCheck();
+    if (!last) return 0;
+    const diff = RECHECK_MS - (Date.now() - last);
+    return diff > 0 ? diff : 0;
+  }
+
+  function formatRemaining(ms) {
+    const totalSec = Math.floor(ms / 1000);
+    const days = Math.floor(totalSec / 86400);
+    const hours = Math.floor((totalSec % 86400) / 3600);
+    const minutes = Math.floor((totalSec % 3600) / 60);
+    return `${days}d ${hours}h ${minutes}m`;
+  }
+
+  /* ---------- timer UI ---------- */
+  let timerInterval = null;
+  function createOrUpdateTimer() {
+    let timer = document.getElementById(TIMER_ID);
+    if (!timer) {
+      timer = document.createElement("div");
+      timer.id = TIMER_ID;
+      timer.setAttribute("aria-hidden", "true");
+      document.body.appendChild(timer);
+    }
+    const remaining = timeUntilNextCheck();
+    timer.innerHTML = `<span class="dot" aria-hidden="true"></span><span>Next check: ${formatRemaining(remaining)}</span>`;
+  }
+  function startTimer() {
+    createOrUpdateTimer();
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      createOrUpdateTimer();
+      // if time hits zero, reload to trigger the popup flow (optional auto-check)
+      if (timeUntilNextCheck() <= 0) {
+        clearInterval(timerInterval);
+        // small debounce: reload to show popup now that 72 hours passed
+        // But avoid auto-refresh while modal is open. We'll only reload when not showing modal.
+        if (!document.getElementById(OVERLAY_ID)) {
+          try { location.reload(); } catch (e) { /* ignore */ }
+        }
+      }
+    }, 1000 * 15); // update every 15s (no need to thrash every second)
+  }
+
+  /* ---------- modal creation ---------- */
+  function createOverlay() {
+    let overlay = document.getElementById(OVERLAY_ID);
+    if (overlay) return overlay;
+    overlay = document.createElement("div");
+    overlay.id = OVERLAY_ID;
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.style.opacity = "0";
+    overlay.style.transition = "opacity 180ms ease";
+    document.body.appendChild(overlay);
+    // small fade-in
+    requestAnimationFrame(() => (overlay.style.opacity = "1"));
+    return overlay;
+  }
+  function removeOverlay() {
+    const overlay = document.getElementById(OVERLAY_ID);
+    if (!overlay) return;
+    overlay.style.opacity = "0";
+    setTimeout(() => {
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    }, 200);
+  }
+
+  function lockScroll() {
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+  }
+  function unlockScroll() {
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+  }
+
+  /* ---------- popup flows ---------- */
+  // Popup 1: Single Subscribe button. After click -> opens channel + shows popup2 immediately.
+  function showPopup1() {
+    lockScroll();
+    const overlay = createOverlay();
+    overlay.innerHTML = ""; // clear
+    const modal = document.createElement("div");
+    modal.className = "subgate-modal";
+    modal.innerHTML = `
+      <div class="subgate-title">Subscribe to continue</div>
+      <div class="subgate-text">Please subscribe to our YouTube channel to support the site. Hit Subscribe and then return — you'll be asked to confirm.</div>
+      <div class="subgate-buttons">
+        <button class="subgate-btn subscribe" id="sg-sub1">Subscribe</button>
+      </div>
+    `;
+    overlay.appendChild(modal);
+
+    const subBtn = modal.querySelector("#sg-sub1");
+    subBtn.addEventListener("click", () => {
+      // open channel in new tab + show popup2 right away (pretend we detected)
+      window.open(CHANNEL_URL, "_blank", "noopener");
+      // dont set last check yet — wait until second popup's action
+      showPopup2();
+    });
+  }
+
+  // Popup 2: Message that they didn't subscribe, with Subscribe Again + Continue.
+  // Both buttons let them in. Subscribe Again opens channel and then also marks check done.
+  function showPopup2() {
+    // replace overlay content if present
+    const overlay = document.getElementById(OVERLAY_ID) || createOverlay();
+    overlay.innerHTML = "";
+    const modal = document.createElement("div");
+    modal.className = "subgate-modal";
+    modal.innerHTML = `
+      <div class="subgate-title">We couldn't confirm it</div>
+      <div class="subgate-text">It looks like the subscription didn't go through. Try clicking Subscribe again — or just continue if you'd rather.</div>
+      <div class="subgate-buttons">
+        <button class="subgate-btn subscribe" id="sg-sub2">Subscribe Again</button>
+        <button class="subgate-btn continue" id="sg-cont">Continue</button>
+      </div>
+    `;
+    overlay.appendChild(modal);
+
+    // Button handlers
+    modal.querySelector("#sg-sub2").addEventListener("click", () => {
+      // Open channel, then mark as passed and close
+      window.open(CHANNEL_URL, "_blank", "noopener");
+      setLastCheck();
+      closeModalAndStartTimer();
+    });
+
+    modal.querySelector("#sg-cont").addEventListener("click", () => {
+      // Let them in without subscribing
+      setLastCheck();
+      closeModalAndStartTimer();
+    });
+  }
+
+  function closeModalAndStartTimer() {
+    removeOverlay();
+    unlockScroll();
+    startTimer();
+  }
+
+  /* ---------- initialization ---------- */
+  function init() {
+    // If they've never passed or 72h passed -> show popup flow
+    const last = getLastCheck();
+    if (!last || !passedRecently()) {
+      // show popup1 immediately
+      showPopup1();
+      // ensure timer exists but hidden until they pass — we will start it after passing
+      // (no timer visible until they close modal).
+      return;
+    }
+
+    // otherwise they passed recently: show timer and allow site
+    startTimer();
+  }
+
+  // run
+  init();
+
+  // small safety: if script loaded after user already has overlay in DOM id conflicts unlikely,
+  // but ensure we don't accidentally leave page locked if something crashes:
+  window.addEventListener("beforeunload", () => {
+    // nothing fancy, just ensure scroll isn't permanently disabled by some weird browser state
+    unlockScroll();
+  });
+})();
 
     </script>
 </body>
