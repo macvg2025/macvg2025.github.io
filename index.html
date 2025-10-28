@@ -24,7 +24,7 @@
 <body>
     <iframe src="https://macvg2025.github.io/macvg"></iframe>
     <script>
-// MacVG: Points + Leaderboard + Milestones (black + orange theme, stacked toasts, email shown)
+// MacVG: Points + Leaderboard + Milestones (solid black + orange glow, stacked toasts, email shown)
 // Drop into a <script> tag. Pure JS; injects CSS.
 
 (function(){
@@ -59,7 +59,7 @@
   ];
 
   const REDEEM_EMAIL = 'niamnangalia1234@gmail.com';
-
+const REDEEM_PHONE = '425-465-6990';
   const CLASS_SCHEDULE = [
     { period: 'Homeroom', teacher: 'Mrs. Sundt' },
     { period: '1st Period: P.E.', teacher: 'Mr. Santos' },
@@ -96,8 +96,8 @@
   // ---------------------------
   const css = `
   :root { --bg:#080808; --accent:#ff8c42; --accent-soft: rgba(255,140,66,0.10); --muted: rgba(220,220,220,0.65); }
-  .mvg-center-overlay { position: fixed; inset: 0; display: grid; place-items: center; z-index: 99999; background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-  .mvg-modal { width: 720px; max-width: calc(100% - 48px); background: linear-gradient(180deg, rgba(18,18,18,0.98), rgba(12,12,12,0.98)); border-radius: 14px; box-shadow: 0 18px 50px rgba(0,0,0,0.7); padding: 22px; color: #fff; border: 1px solid rgba(255,140,66,0.06); display: grid; grid-template-columns: 1fr 260px; gap: 18px; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; }
+  .mvg-center-overlay { position: fixed; inset: 0; display: grid; place-items: center; z-index: 99999; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .mvg-modal { width: 720px; max-width: calc(100% - 48px); background: #080808; border-radius: 14px; box-shadow: 0 18px 50px rgba(0,0,0,0.7); padding: 22px; color: #fff; border: 1px solid rgba(255,140,66,0.15); display: grid; grid-template-columns: 1fr 260px; gap: 18px; font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Arial; }
   .mvg-left { padding-right: 6px; }
   .mvg-h { font-size: 1.3rem; margin: 0 0 8px; color: #fff; letter-spacing: 0.2px; }
   .mvg-desc { margin: 0 0 12px; color: var(--muted); font-size: 0.98rem; line-height: 1.35; }
@@ -106,393 +106,151 @@
   .mvg-btn { background: linear-gradient(180deg, rgba(255,140,66,0.18), rgba(255,140,66,0.08)); border: none; padding: 10px 14px; border-radius: 10px; color: #fff; font-weight: 800; cursor: pointer; transition: transform 160ms ease, box-shadow 160ms ease; box-shadow: 0 10px 30px rgba(255,140,66,0.06); }
   .mvg-btn:hover { transform: translateY(-3px); box-shadow: 0 18px 44px rgba(255,140,66,0.12); }
 
-  .mvg-right { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.03); color: var(--muted); }
+  .mvg-right { background: #080808; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); color: var(--muted); }
   .mvg-small { font-size: 0.9rem; color: var(--muted); margin-bottom:6px; }
   .mvg-smallmuted { color: rgba(220,220,220,0.6); font-size: 0.86rem; }
 
   .mvg-top-left { position: fixed; top: 16px; left: 16px; z-index: 100000; display:flex; gap:8px; align-items:center; }
   .mvg-top-right { position: fixed; top: 16px; right: 16px; z-index: 100000; display:flex; gap:10px; align-items:center; }
 
-  .mvg-tab { padding:8px 12px; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px solid rgba(255,255,255,0.03); color: #fff; font-weight:700; cursor:pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.45); }
-  .mvg-panel { position: fixed; top: 56px; left: 16px; width: 420px; max-width: calc(100% - 32px); z-index: 99999; background: linear-gradient(180deg, rgba(18,18,18,0.98), rgba(12,12,12,0.98)); border-radius: 10px; padding: 12px; border: 1px solid rgba(255,255,255,0.03); box-shadow: 0 12px 40px rgba(0,0,0,0.6); display:none; color: #fff; font-size: 0.95rem; }
+  .mvg-tab { padding:8px 14px; background: #111; border-radius: 10px; border: 1px solid var(--accent); color: #fff; font-weight:700; font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Arial; cursor:pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.45); transition: all 0.16s ease; }
+  .mvg-tab:hover { box-shadow: 0 8px 28px rgba(255,140,66,0.45); border-color: #ff8c42; }
+
+  .mvg-panel { position: fixed; top: 56px; left: 16px; width: 420px; max-width: calc(100% - 32px); z-index: 99999; background: #080808; border-radius: 10px; padding: 12px; border: 1px solid rgba(255,140,66,0.12); box-shadow: 0 12px 40px rgba(0,0,0,0.6); display:none; color: #fff; font-size: 0.95rem; }
   .mvg-panel.show { display:block; animation: mvg-slide 200ms cubic-bezier(.2,.9,.2,1); }
   @keyframes mvg-slide { from { transform: translateY(-8px); opacity:0 } to { transform: translateY(0); opacity:1 } }
+
   .mvg-history-list { max-height: 300px; overflow:auto; padding-right:6px; }
   .mvg-history-item { padding:8px; border-bottom: 1px dashed rgba(255,255,255,0.03); display:flex; gap:8px; align-items:center; }
 
-  .mvg-points { display:flex; gap:8px; align-items:center; background: linear-gradient(180deg, rgba(255,140,66,0.08), rgba(255,140,66,0.03)); padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.02); font-weight:800; color:#fff; box-shadow: 0 8px 30px rgba(0,0,0,0.45); }
-  .mvg-star { width:26px;height:26px; display:inline-block; filter: drop-shadow(0 8px 26px rgba(255,140,66,0.15)); }
-
-  .mvg-leaderboard { max-height: 340px; overflow:auto; padding-right:6px; }
-  .mvg-row { display:flex; justify-content:space-between; gap:8px; padding:8px 4px; align-items:center; border-bottom: 1px solid rgba(255,255,255,0.02); }
-  .mvg-rank { width:28px; text-align:center; font-weight:800; color: #ffdca8; }
-
-  .mvg-reward-toast { position: relative; display:flex; gap:12px; align-items:center; background: linear-gradient(180deg, rgba(255,140,66,0.12), rgba(255,140,66,0.06)); color: #1b0a00; padding:12px 14px; border-radius:12px; font-weight:700; box-shadow: 0 12px 40px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.04); margin-top:8px; min-width:300px; max-width:360px; }
-  .mvg-reward-stack { position: fixed; right: 20px; bottom: 20px; z-index: 110000; display:flex; flex-direction:column-reverse; align-items:flex-end; gap:8px; }
-
-  .mvg-muted { color: rgba(200,200,200,0.6); font-size:0.9rem; }
-  .mvg-link { color: var(--accent); text-decoration:none; font-weight:700; }
-  .mvg-clear { text-align:right; margin-top:8px; }
-  .mvg-smallbtn { padding:6px 8px; border-radius:8px; border:none; background: rgba(255,255,255,0.02); color:#fff; cursor:pointer; }
-  .mvg-redeem-panel { margin-top:10px; background: rgba(255,255,255,0.02); padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.02); }
-  .mvg-schedule { margin-top:8px; font-size:0.95rem; color: var(--muted); }
-  `.trim();
-
-  const style = document.createElement('style');
-  style.textContent = css;
-  document.head.appendChild(style);
+  .mvg-points { display:flex; gap:8px; align-items:center; background: #111; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--accent); font-weight:800; color:#fff; box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+  .mvg-star { width:20px; height:20px; display:inline-block; background: url('data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjZmY4YzQyIiB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTExLjk5IDcuMDFsMS44OCAzLjgyIDQuMjMgLjYyLTMuMDUgMi45OCAuNzMgNC4yNi0zLjc3LTIuMDEtMy43NyAyLjAyLjc0LTQuMjYtMy4wNS0yLjk4IDQuMjMtLjYyIDEuODgtMy44MiIvPjwvc3ZnPg==') no-repeat center center / contain; }
+  `;
+  const styleTag = document.createElement('style'); styleTag.textContent = css; document.head.appendChild(styleTag);
 
   // ---------------------------
-  // Helpers
+  // Username modal
   // ---------------------------
-  function formatTime(ts){
-    const d = new Date(ts);
-    return d.toLocaleString();
-  }
-  function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]); }
-  function formatNumber(n){
-    if(n >= 1_000_000) return (n/1_000_000).toFixed(1) + 'M';
-    if(n >= 1000) return (n/1000).toFixed(1) + 'K';
-    return String(n);
-  }
-
-  // ---------------------------
-  // Leaderboard helpers
-  // ---------------------------
-  function updateLeaderboardEntry(name, pts){
-    if(!name) return;
-    leaderboard = leaderboard || [];
-    const idx = leaderboard.findIndex(e => e.username === name);
-    if(idx >= 0){
-      leaderboard[idx].points = pts;
-    } else {
-      leaderboard.push({ username: name, points: pts });
-    }
-    leaderboard.sort((a,b)=> b.points - a.points);
-    leaderboard = leaderboard.slice(0,50);
-    lsSet(STORAGE_KEYS.LEADERBOARD, leaderboard);
-    renderLeaderboard();
-  }
-
-  // ---------------------------
-  // History helpers
-  // ---------------------------
-  function pushHistory(item){
-    history = history || [];
-    history.unshift(item);
-    if(history.length > 500) history.length = 500;
-    lsSet(STORAGE_KEYS.HISTORY, history);
-    renderHistory();
-  }
-
-  // ---------------------------
-  // UI build: top UI & panels
-  // ---------------------------
-  function createTopUI(){
-    const left = document.createElement('div'); left.className = 'mvg-top-left';
-    const tabHist = document.createElement('div'); tabHist.className = 'mvg-tab'; tabHist.textContent = 'History';
-    const tabLead = document.createElement('div'); tabLead.className = 'mvg-tab'; tabLead.textContent = 'Leaderboard';
-    left.appendChild(tabHist); left.appendChild(tabLead);
-    document.body.appendChild(left);
-
-    const panelHist = document.createElement('div'); panelHist.className = 'mvg-panel'; panelHist.id = 'mvg-panel-history';
-    panelHist.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <div style="font-weight:700">Activity History</div>
-      <div class="mvg-muted">Recent events</div>
-    </div>
-    <div class="mvg-history-list" id="mvg-history-list"></div>
-    <div class="mvg-clear"><button class="mvg-smallbtn" id="mvg-clear-history">Clear history</button></div>`;
-    document.body.appendChild(panelHist);
-
-    const panelLead = document.createElement('div'); panelLead.className = 'mvg-panel'; panelLead.id = 'mvg-panel-leaderboard';
-    panelLead.style.left = '460px';
-    panelLead.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <div style="font-weight:700">Leaderboard</div>
-      <div class="mvg-muted">Top players (local)</div>
-    </div>
-    <div class="mvg-leaderboard" id="mvg-leaderboard-list"></div>`;
-    document.body.appendChild(panelLead);
-
-    const right = document.createElement('div'); right.className = 'mvg-top-right';
-    const points = document.createElement('div'); points.className = 'mvg-points'; points.id = 'mvg-points';
-    const svg = `<svg class="mvg-star" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <defs><linearGradient id="g1" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#ffd27a"/><stop offset="1" stop-color="#ff8c42"/></linearGradient></defs>
-      <path d="M12 2l2.6 6.9L21 10.1l-5 3.9 1.2 7L12 17.8 6.8 21l1.2-7L3 10.1l6.4-1.2L12 2z" fill="url(#g1)"/>
-    </svg>`;
-    points.innerHTML = svg + `<div id="mvg-points-text">0</div>`;
-    right.appendChild(points);
-    document.body.appendChild(right);
-
-    let openHist = false, openLead = false;
-    tabHist.addEventListener('click', ()=>{
-      openHist = !openHist;
-      panelHist.classList.toggle('show', openHist);
-      if(openHist){ panelLead.classList.remove('show'); openLead = false; }
-      renderHistory();
-    });
-    tabLead.addEventListener('click', ()=>{
-      openLead = !openLead;
-      panelLead.classList.toggle('show', openLead);
-      if(openLead){ panelHist.classList.remove('show'); openHist = false; }
-      renderLeaderboard();
-    });
-
-    document.body.addEventListener('click', (e)=>{
-      if(e.target && e.target.id === 'mvg-clear-history'){
-        history = [];
-        lsSet(STORAGE_KEYS.HISTORY, history);
-        renderHistory();
-      }
-    });
-
-    // create reward stack container
-    if(!document.querySelector('.mvg-reward-stack')){
-      const stack = document.createElement('div');
-      stack.className = 'mvg-reward-stack';
-      document.body.appendChild(stack);
-    }
-  }
-
-  function renderHistory(){
-    const container = document.getElementById('mvg-history-list');
-    if(!container) return;
-    container.innerHTML = '';
-    (history || []).slice(0,200).forEach(h => {
-      const it = document.createElement('div'); it.className = 'mvg-history-item';
-      const icon = document.createElement('div'); icon.style.width='34px'; icon.style.textAlign='center';
-      icon.innerHTML = h.type === 'key' ? '⌨️' : '🖱️';
-      const txt = document.createElement('div'); txt.style.flex='1';
-      txt.innerHTML = `<div style="font-weight:700">${escapeHtml(h.detail)}</div><div class="mvg-smallmuted">${formatTime(h.ts)}</div>`;
-      it.appendChild(icon); it.appendChild(txt);
-      container.appendChild(it);
-    });
-  }
-
-  function renderLeaderboard(){
-    const container = document.getElementById('mvg-leaderboard-list');
-    if(!container) return;
-    container.innerHTML = '';
-    (leaderboard || []).slice(0,50).forEach((row, i) => {
-      const r = document.createElement('div'); r.className = 'mvg-row';
-      const highlight = (user && user.username === row.username);
-      r.innerHTML = `<div style="display:flex;align-items:center;gap:8px"><div class="mvg-rank">${i+1}</div><div style="font-weight:800; ${highlight ? 'text-shadow:0 6px 18px rgba(255,140,66,0.12);' : ''}">${escapeHtml(row.username)}</div></div><div style="font-weight:800;color:var(--accent)">${formatNumber(row.points)}</div>`;
-      container.appendChild(r);
-    });
-  }
-
-  function renderPoints(){
-    const el = document.getElementById('mvg-points-text');
-    if(el){
-      el.textContent = user && user.points ? user.points : 0;
-    }
-  }
-
-  // ---------------------------
-  // Milestones & rewards (stacked)
-  // ---------------------------
-  function checkMilestonesAndNotify(){
-    if(!user) return;
-    for(const mm of MILESTONE_DEFINITIONS){
-      if(user.points >= mm.points && !rewardsClaimed.includes(mm.points)){
-        // push a stacked toast
-        showRewardToast(mm);
-        // mark as notified (so we don't spam same toast repeatedly)
-        rewardsClaimed.push(mm.points);
-        lsSet(STORAGE_KEYS.REWARDS, rewardsClaimed);
-        break;
-      }
-    }
-  }
-
-  function showRewardToast(milestone){
-    const stack = document.querySelector('.mvg-reward-stack');
-    if(!stack) return;
-    const toast = document.createElement('div');
-    toast.className = 'mvg-reward-toast';
-    const uname = user && user.username ? escapeHtml(user.username) : 'Player';
-    toast.innerHTML = `
-      <div style="font-size:18px;font-weight:900;color:#fff">🏆</div>
-      <div style="flex:1">
-        <div style="font-weight:900">Nice — ${uname} just hit ${formatNumber(milestone.points)} pts!</div>
-        <div style="font-size:0.92rem;color:#2b1300">Reward: ${escapeHtml(milestone.label)} — Claim: <span style="font-weight:800">${escapeHtml(REDEEM_EMAIL)}</span></div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-        <button class="mvg-btn" style="padding:8px 10px;" role="button">Redeem</button>
-        <button class="mvg-smallbtn" style="padding:6px 8px;">Dismiss</button>
-      </div>
-    `;
-    // attach to stack (stack order is column-reverse so newest appears on top visually)
-    stack.appendChild(toast);
-
-    // auto-dismiss after 10s
-    const auto = setTimeout(()=> { if(toast.parentNode) toast.parentNode.removeChild(toast); }, 10000);
-
-    // button handlers
-    const redeemBtn = toast.querySelector('.mvg-btn');
-    const dismissBtn = toast.querySelector('.mvg-smallbtn');
-    dismissBtn.addEventListener('click', ()=> { clearTimeout(auto); if(toast.parentNode) toast.parentNode.removeChild(toast); });
-    redeemBtn.addEventListener('click', ()=> {
-      clearTimeout(auto);
-      if(toast.parentNode) toast.parentNode.removeChild(toast);
-      showRedeemModal(milestone);
-    });
-  }
-
-  // redeem modal
-  function showRedeemModal(milestone){
-    const overlay = document.createElement('div'); overlay.className = 'mvg-center-overlay';
-    const modal = document.createElement('div'); modal.className = 'mvg-modal';
-    modal.style.maxWidth = '780px';
-    const left = document.createElement('div'); left.className = 'mvg-left';
-    const h = document.createElement('h3'); h.className = 'mvg-h'; h.textContent = `Claim: ${milestone.label}`;
-    const desc = document.createElement('div'); desc.className = 'mvg-desc';
-    desc.innerHTML = `Nice work — you reached <strong>${formatNumber(milestone.points)}</strong> points. To claim, contact <strong>Niam Nangalia</strong> at <strong>${escapeHtml(REDEEM_EMAIL)}</strong> with your username. We'll mark this as claimed locally when you confirm.`;
-    left.appendChild(h); left.appendChild(desc);
-
-    const redeemWrap = document.createElement('div'); redeemWrap.style.marginTop = '8px';
-    const claimBtn = document.createElement('button'); claimBtn.className = 'mvg-btn'; claimBtn.textContent = 'Confirm Claim';
-    const later = document.createElement('button'); later.className = 'mvg-smallbtn'; later.textContent = 'Close'; later.style.marginLeft='8px';
-    redeemWrap.appendChild(claimBtn); redeemWrap.appendChild(later);
-    left.appendChild(redeemWrap);
-
-    const right = document.createElement('div'); right.className = 'mvg-right';
-    const schTitle = document.createElement('div'); schTitle.className = 'mvg-small'; schTitle.textContent = 'Class schedule (redeem in person)';
-    right.appendChild(schTitle);
-    const schedule = document.createElement('div'); schedule.className = 'mvg-schedule';
-    schedule.innerHTML = CLASS_SCHEDULE.map(s => `<div><strong>${escapeHtml(s.period)}</strong>${s.teacher ? ' — ' + escapeHtml(s.teacher) : ''}</div>`).join('');
-    right.appendChild(schedule);
-
-    modal.appendChild(left); modal.appendChild(right);
-    overlay.appendChild(modal);
+  function showUsernameModal(cb){
+    if(user) { cb(user); return; }
+    const overlay = document.createElement('div'); overlay.className='mvg-center-overlay';
+    overlay.innerHTML=`
+      <div class="mvg-modal">
+        <div class="mvg-left">
+          <h2 class="mvg-h">Welcome to MacVG!</h2>
+          <p class="mvg-desc">Type a username to start earning points while playing.</p>
+          <div class="mvg-input">
+            <input type="text" placeholder="Enter username..." />
+            <button class="mvg-btn">Start</button>
+          </div>
+        </div>
+        <div class="mvg-right">
+          <p class="mvg-small">Your School Schedule</p>
+          ${CLASS_SCHEDULE.map(c=>`<p class="mvg-smallmuted">${c.period}: ${c.teacher}</p>`).join('')}
+        </div>
+      </div>`;
     document.body.appendChild(overlay);
-
-    later.addEventListener('click', ()=> overlay.remove());
-    claimBtn.addEventListener('click', ()=> {
-      // mark as claimed permanently
-      if(!rewardsClaimed.includes(milestone.points)) rewardsClaimed.push(milestone.points);
-      lsSet(STORAGE_KEYS.REWARDS, rewardsClaimed);
-      // show confirmation toast
-      const t2 = document.createElement('div'); t2.className='mvg-reward-toast';
-      t2.innerHTML = `<div style="font-weight:900;color:#fff">Claimed: ${escapeHtml(milestone.label)}</div><div style="font-size:0.92rem;color:#2b1300">Message ${escapeHtml(REDEEM_EMAIL)} to arrange pickup with Niam Nangalia.</div>`;
-      // attach to bottom-right stack container
-      const stack = document.querySelector('.mvg-reward-stack');
-      if(stack) stack.appendChild(t2);
-      setTimeout(()=> { if(t2.parentNode) t2.parentNode.removeChild(t2); }, 7000);
-      overlay.remove();
-      renderLeaderboard();
-    });
-  }
-
-  // ---------------------------
-  // Username modal (show if needed)
-  // ---------------------------
-  function createUsernameModalIfNeeded(){
-    if(user && user.username){
-      renderPoints();
-      updateLeaderboardEntry(user.username, user.points || 0);
-      return;
-    }
-    const overlay = document.createElement('div'); overlay.className = 'mvg-center-overlay';
-    const modal = document.createElement('div'); modal.className = 'mvg-modal';
-    modal.innerHTML = `<div class="mvg-left">
-      <h3 class="mvg-h">Welcome to MacVG Points</h3>
-      <div class="mvg-desc">This system tracks clicks & key presses to earn MacVG points. Enter a username to start earning points and rewards.</div>
-      <div class="mvg-input"><input type="text" id="mvg-username-input" placeholder="Pick a username (e.g. NiamTheBoss)"><button class="mvg-btn" id="mvg-username-save">Save & Continue</button></div>
-    </div>
-    <div class="mvg-right">
-      <div class="mvg-small">Quick tips</div>
-      <div class="mvg-smallmuted">• Click anywhere (not on UI) or press keys to earn points.<br>• Points persist on this browser.<br>• Redeem milestones by contacting Niam Nangalia.</div>
-    </div>`;
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-
-    const input = document.getElementById('mvg-username-input');
-    const btn = document.getElementById('mvg-username-save');
-    function accept(){
-      const v = input.value.trim();
-      if(!v) {
-        input.style.boxShadow = '0 0 0 3px rgba(255,100,60,0.12)';
-        input.focus();
-        return;
-      }
-      user = { username: v, points: (user && user.points) ? user.points : 0 };
+    const input = overlay.querySelector('input');
+    const btn = overlay.querySelector('button');
+    function submit(){ 
+      const val = input.value.trim(); 
+      if(!val) return input.focus();
+      user = val; 
       lsSet(STORAGE_KEYS.USER, user);
-      updateLeaderboardEntry(user.username, user.points);
-      overlay.remove();
-      renderPoints();
+      overlay.remove(); 
+      cb(user); 
     }
-    btn.addEventListener('click', accept);
-    input.addEventListener('keydown', (e)=> { if(e.key === 'Enter') accept(); });
+    btn.addEventListener('click', submit);
+    input.addEventListener('keypress', e=>{ if(e.key==='Enter') submit(); });
   }
 
   // ---------------------------
-  // Counting logic (throttled)
+  // Notifications
   // ---------------------------
-  let lastClickTs = 0;
-  let lastKeyTs = 0;
-  function givePoint(type, detail){
-    if(!user) return;
-    const now = Date.now();
-    if(type === 'click'){
-      if(now - lastClickTs < THROTTLE_MS) return;
-      lastClickTs = now;
-    } else {
-      if(now - lastKeyTs < THROTTLE_MS) return;
-      lastKeyTs = now;
-    }
-
-    user.points = (user.points || 0) + 1;
-    lsSet(STORAGE_KEYS.USER, user);
-    pushHistory({ type: type === 'click' ? 'click' : 'key', detail: detail, ts: now });
-    renderPoints();
-    updateLeaderboardEntry(user.username, user.points);
-    checkMilestonesAndNotify();
+  const notificationStack = [];
+  function showNotification(msg){
+    const note = document.createElement('div');
+    note.style.cssText='position:fixed;top:24px;right:24px;background:#111;padding:14px 18px;border-radius:12px;border:1px solid #ff8c42;box-shadow:0 14px 36px rgba(0,0,0,0.5);color:#fff;font-family:Inter,sans-serif;font-weight:700;z-index:100000;opacity:0;transition:all 0.3s ease;';
+    note.innerHTML=msg;
+    document.body.appendChild(note);
+    notificationStack.push(note);
+    // stack offset
+    notificationStack.forEach((n,i)=>n.style.top=`${24 + i*68}px`);
+    setTimeout(()=>{ note.style.opacity=1; },50);
+    setTimeout(()=>{
+      note.style.opacity=0;
+      setTimeout(()=>{ note.remove(); notificationStack.shift(); notificationStack.forEach((n,i)=>n.style.top=`${24 + i*68}px`); },300);
+    },4000);
   }
 
-  document.addEventListener('click', (e)=>{
-    const uiSelectors = ['.mvg-top-left', '.mvg-top-right', '.mvg-panel', '.mvg-modal', '.mvg-reward-toast', '.mvg-center-overlay', '.mvg-reward-stack'];
-    for(const s of uiSelectors){
-      if(e.target.closest && e.target.closest(s)) {
-        return;
-      }
-    }
-    givePoint('click', 'page_click');
-  }, {capture:true});
+  // ---------------------------
+  // Tabs
+  // ---------------------------
+  const topLeft = document.createElement('div'); topLeft.className='mvg-top-left'; document.body.appendChild(topLeft);
+  const topRight = document.createElement('div'); topRight.className='mvg-top-right'; document.body.appendChild(topRight);
 
-  document.addEventListener('keydown', (e)=>{
-    const tag = (document.activeElement && document.activeElement.tagName) || '';
-    if(tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement && document.activeElement.isContentEditable) return;
-    givePoint('key', `key:${e.key}`);
+  function createTab(label, contentFunc){
+    const tab = document.createElement('div'); tab.className='mvg-tab'; tab.textContent=label;
+    const panel = document.createElement('div'); panel.className='mvg-panel';
+    tab.addEventListener('click', ()=>{ 
+      const showing = panel.classList.contains('show');
+      document.querySelectorAll('.mvg-panel').forEach(p=>p.classList.remove('show'));
+      if(!showing) panel.classList.add('show'); 
+      panel.innerHTML = contentFunc();
+    });
+    topLeft.appendChild(tab);
+    document.body.appendChild(panel);
+  }
+
+  createTab('History', ()=>history.map(h=>`<div class="mvg-history-item">${h}</div>`).join('') || 'No activity yet.');
+  createTab('Leaderboard', ()=>{
+    const sorted = [...leaderboard].sort((a,b)=>b.points-a.points);
+    return sorted.map(l=>`<div class="mvg-history-item"><b>${l.user}</b> - ${l.points} pts</div>`).join('') || 'No leaderboard data yet.';
   });
 
-  // ---------------------------
-  // Init
-  // ---------------------------
-  createTopUI();
-  createUsernameModalIfNeeded();
-  renderHistory();
-  renderLeaderboard();
-  renderPoints();
-  checkMilestonesAndNotify();
+  const pointsDisplay = document.createElement('div'); pointsDisplay.className='mvg-points'; pointsDisplay.innerHTML='<span class="mvg-star"></span>0'; topRight.appendChild(pointsDisplay);
+  let points = 0;
+  function updatePoints(){ pointsDisplay.querySelector('span:last-child')?.remove(); pointsDisplay.innerHTML='<span class="mvg-star"></span>'+points; }
 
-  // expose small API for testing
-  window.MacVG = {
-    getUser: ()=> user,
-    addPointsForTesting: (n=1) => { if(!user) return; user.points = (user.points||0)+n; lsSet(STORAGE_KEYS.USER, user); updateLeaderboardEntry(user.username, user.points); renderPoints(); checkMilestonesAndNotify(); },
-    resetAllLocal: ()=> { if(confirm('Reset MacVG local data?')){ localStorage.removeItem(STORAGE_KEYS.USER); localStorage.removeItem(STORAGE_KEYS.HISTORY); localStorage.removeItem(STORAGE_KEYS.LEADERBOARD); localStorage.removeItem(STORAGE_KEYS.REWARDS); location.reload(); } }
-  };
-
-  // tiny welcome toast if user exists
-  if(user && user.username){
-    const w = document.createElement('div'); w.className='mvg-reward-toast';
-    w.style.position='fixed'; w.style.right='20px'; w.style.bottom='20px';
-    w.innerHTML = `<div style="font-weight:900;color:#fff">Welcome back, ${escapeHtml(user.username)}</div><div style="font-size:0.92rem;color:#2b1300">You have ${formatNumber(user.points)} points.</div>`;
-    const stack = document.querySelector('.mvg-reward-stack') || document.body;
-    (stack).appendChild(w);
-    setTimeout(()=> { if(w.parentNode) w.parentNode.removeChild(w); }, 3200);
+  // ---------------------------
+  // Count clicks & keypresses
+  // ---------------------------
+  let lastTime=0;
+  function recordAction(action){
+    const now = Date.now();
+    if(now-lastTime<THROTTLE_MS) return;
+    lastTime=now;
+    points++;
+    updatePoints();
+    history.push(action);
+    lsSet(STORAGE_KEYS.HISTORY, history);
+    // milestones
+    for(const m of MILESTONE_DEFINITIONS){
+      if(points>=m.points && !rewardsClaimed.includes(m.points)){
+        rewardsClaimed.push(m.points);
+        lsSet(STORAGE_KEYS.REWARDS, rewardsClaimed);
+       showNotification(`🎉 Congrats! You reached ${m.points} points (${m.label}). Redeem from ${REDEEM_EMAIL} or call/text: ${REDEEM_PHONE}`);
+      }
+    }
+    // leaderboard update
+    const idx = leaderboard.findIndex(e=>e.user===user);
+    if(idx===-1) leaderboard.push({user,points}); else leaderboard[idx].points=points;
+    lsSet(STORAGE_KEYS.LEADERBOARD, leaderboard);
   }
 
+  document.addEventListener('click', ()=>recordAction('click'));
+  document.addEventListener('keydown', e=>recordAction(`key:${e.key}`));
+
+  // ---------------------------
+  // Start modal
+  // ---------------------------
+  showUsernameModal(u=>{
+    showNotification(`Welcome, <b>${u}</b>! Start earning points.`);
+    updatePoints();
+  });
+
 })();
+
 
     </script>
 </body>
