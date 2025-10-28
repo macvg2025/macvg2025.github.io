@@ -24,302 +24,474 @@
 <body>
     <iframe src="https://macvg2025.github.io/macvg"></iframe>
     <script>
-// Paste this as a single <script> at the end of your <body> or in an external .js file.
-// It injects all HTML/CSS and handles the two-stage fake YouTube-sub popup + 3-day recheck + top-center timer.
-// Channel: https://www.youtube.com/channel/UC6-3o47fbPwzq6uMC6977iw
+// MacVG: Points + Leaderboard + Milestones (black + orange theme, stacked toasts, email shown)
+// Drop into a <script> tag. Pure JS; injects CSS.
 
-(function () {
-  const CHANNEL_URL = "https://www.youtube.com/channel/UC6-3o47fbPwzq6uMC6977iw";
-  const STORAGE_KEY = "lastSubCheck";
-  const LOCK_KEY = "subGatePassed"; // not strictly necessary but keeps intent clear
-  const RECHECK_MS = 72 * 60 * 60 * 1000; // 72 hours
-  const TIMER_ID = "subgate-timer";
-  const OVERLAY_ID = "subgate-overlay";
+(function(){
+  // ---------------------------
+  // Config / thresholds / data
+  // ---------------------------
+  const STORAGE_KEYS = {
+    USER: 'macvg_user_v1',
+    HISTORY: 'macvg_history_v1',
+    LEADERBOARD: 'macvg_leaderboard_v1',
+    REWARDS: 'macvg_rewards_claimed_v1'
+  };
 
-  /* ---------- inject styles ---------- */
+  const MILESTONE_DEFINITIONS = [
+    {points: 10, label: 'Welcome Badge'},
+    {points: 50, label: 'Starter Badge'},
+    {points: 100, label: 'Novice Gamer'},
+    {points: 500, label: 'Pro Gamer'},
+    {points: 1000, label: 'Elite Gamer'},
+    {points: 5000, label: 'MacVG Master'},
+    {points: 10000, label: 'School Star'},
+    {points: 25000, label: 'Coding Champ'},
+    {points: 50000, label: 'Exclusive Access'},
+    {points: 100000, label: 'VIP'},
+    {points: 250000, label: 'Tech Genius'},
+    {points: 500000, label: 'Legendary Player'},
+    {points: 1000000, label: 'Ultimate Gamer'},
+    {points: 2000000, label: 'The Chosen One'},
+    {points: 5000000, label: 'School Hero'},
+    {points: 10000000, label: 'MacVG Immortal'},
+    {points: 100000000, label: 'Golden Legend — iPhone 16'}
+  ];
+
+  const REDEEM_EMAIL = 'niamnangalia1234@gmail.com';
+
+  const CLASS_SCHEDULE = [
+    { period: 'Homeroom', teacher: 'Mrs. Sundt' },
+    { period: '1st Period: P.E.', teacher: 'Mr. Santos' },
+    { period: '2nd Period: Algebra', teacher: 'Mr. Featherston' },
+    { period: '3rd Period: Design and Modeling', teacher: 'Mr. Christensen' },
+    { period: 'A Lunch', teacher: '' },
+    { period: '4th Period: Earth and Space Science', teacher: 'Mrs. Angster' },
+    { period: '5th Period: Advanced Language Arts', teacher: 'Mrs. Sundt' },
+    { period: '6th Period: Social Studies', teacher: 'Mrs. Tiemeyer' }
+  ];
+
+  const THROTTLE_MS = 150;
+
+  // ---------------------------
+  // Storage helpers
+  // ---------------------------
+  function lsGet(key, fallback){
+    try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch(e){ return fallback; }
+  }
+  function lsSet(key, val){
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){}
+  }
+
+  // ---------------------------
+  // Load data
+  // ---------------------------
+  let user = lsGet(STORAGE_KEYS.USER, null);
+  let history = lsGet(STORAGE_KEYS.HISTORY, []);
+  let leaderboard = lsGet(STORAGE_KEYS.LEADERBOARD, []);
+  let rewardsClaimed = lsGet(STORAGE_KEYS.REWARDS, []);
+
+  // ---------------------------
+  // Inject CSS
+  // ---------------------------
   const css = `
-  /* Popup overlay + modal */
-  #${OVERLAY_ID} {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.55);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 999999;
-    backdrop-filter: blur(3px);
-  }
-  .subgate-modal {
-    width: clamp(260px, 42vw, 520px);
-    max-width: 92%;
-    background: #0f1113;
-    color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 6px 30px rgba(0,0,0,0.6), 0 0 0 4px rgba(255,140,0,0.03);
-    padding: 18px;
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    text-align: center;
-    border: 1px solid rgba(255,255,255,0.04);
-  }
-  .subgate-title {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 8px;
-    color: #ffb06b;
-  }
-  .subgate-text {
-    font-size: 13px;
-    margin-bottom: 14px;
-    color: #d6d6d6;
-    line-height: 1.25;
-  }
-  .subgate-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-  }
-  .subgate-btn {
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: none;
-    font-weight: 700;
-    cursor: pointer;
-    min-width: 100px;
-    font-size: 13px;
-  }
-  .subgate-btn.subscribe {
-    background: linear-gradient(180deg, #ff7a00, #ff5c00);
-    color: white;
-    box-shadow: 0 6px 18px rgba(255,92,0,0.18);
-  }
-  .subgate-btn.continue {
-    background: rgba(255,255,255,0.06);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.04);
-  }
+  :root { --bg:#080808; --accent:#ff8c42; --accent-soft: rgba(255,140,66,0.10); --muted: rgba(220,220,220,0.65); }
+  .mvg-center-overlay { position: fixed; inset: 0; display: grid; place-items: center; z-index: 99999; background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .mvg-modal { width: 720px; max-width: calc(100% - 48px); background: linear-gradient(180deg, rgba(18,18,18,0.98), rgba(12,12,12,0.98)); border-radius: 14px; box-shadow: 0 18px 50px rgba(0,0,0,0.7); padding: 22px; color: #fff; border: 1px solid rgba(255,140,66,0.06); display: grid; grid-template-columns: 1fr 260px; gap: 18px; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; }
+  .mvg-left { padding-right: 6px; }
+  .mvg-h { font-size: 1.3rem; margin: 0 0 8px; color: #fff; letter-spacing: 0.2px; }
+  .mvg-desc { margin: 0 0 12px; color: var(--muted); font-size: 0.98rem; line-height: 1.35; }
+  .mvg-input { display:flex; gap:8px; margin-top: 10px; }
+  .mvg-input input[type="text"]{ flex:1; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.04); background: rgba(255,255,255,0.02); color: #fff; font-size: 0.98rem; outline: none; box-shadow: inset 0 -8px 18px rgba(0,0,0,0.6); }
+  .mvg-btn { background: linear-gradient(180deg, rgba(255,140,66,0.18), rgba(255,140,66,0.08)); border: none; padding: 10px 14px; border-radius: 10px; color: #fff; font-weight: 800; cursor: pointer; transition: transform 160ms ease, box-shadow 160ms ease; box-shadow: 0 10px 30px rgba(255,140,66,0.06); }
+  .mvg-btn:hover { transform: translateY(-3px); box-shadow: 0 18px 44px rgba(255,140,66,0.12); }
 
-  /* tiny top-center timer */
-  #${TIMER_ID} {
-    position: fixed;
-    top: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 999998;
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    font-size: 12px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    background: rgba(15,17,19,0.9);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.03);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 8px rgba(255,140,0,0.05);
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    letter-spacing: 0.2px;
-  }
-  #${TIMER_ID} .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #ff8c00;
-    box-shadow: 0 0 8px rgba(255,140,0,0.45);
-    flex: none;
-  }
+  .mvg-right { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.03); color: var(--muted); }
+  .mvg-small { font-size: 0.9rem; color: var(--muted); margin-bottom:6px; }
+  .mvg-smallmuted { color: rgba(220,220,220,0.6); font-size: 0.86rem; }
 
-  /* small responsive tweaks */
-  @media (max-width: 420px) {
-    .subgate-modal { padding: 14px; }
-    .subgate-title { font-size: 15px; }
-    .subgate-text { font-size: 12px; }
-    .subgate-btn { min-width: 86px; padding: 7px 10px; font-size: 12px; }
-  }
-  `;
-  const style = document.createElement("style");
-  style.innerHTML = css;
+  .mvg-top-left { position: fixed; top: 16px; left: 16px; z-index: 100000; display:flex; gap:8px; align-items:center; }
+  .mvg-top-right { position: fixed; top: 16px; right: 16px; z-index: 100000; display:flex; gap:10px; align-items:center; }
+
+  .mvg-tab { padding:8px 12px; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px solid rgba(255,255,255,0.03); color: #fff; font-weight:700; cursor:pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.45); }
+  .mvg-panel { position: fixed; top: 56px; left: 16px; width: 420px; max-width: calc(100% - 32px); z-index: 99999; background: linear-gradient(180deg, rgba(18,18,18,0.98), rgba(12,12,12,0.98)); border-radius: 10px; padding: 12px; border: 1px solid rgba(255,255,255,0.03); box-shadow: 0 12px 40px rgba(0,0,0,0.6); display:none; color: #fff; font-size: 0.95rem; }
+  .mvg-panel.show { display:block; animation: mvg-slide 200ms cubic-bezier(.2,.9,.2,1); }
+  @keyframes mvg-slide { from { transform: translateY(-8px); opacity:0 } to { transform: translateY(0); opacity:1 } }
+  .mvg-history-list { max-height: 300px; overflow:auto; padding-right:6px; }
+  .mvg-history-item { padding:8px; border-bottom: 1px dashed rgba(255,255,255,0.03); display:flex; gap:8px; align-items:center; }
+
+  .mvg-points { display:flex; gap:8px; align-items:center; background: linear-gradient(180deg, rgba(255,140,66,0.08), rgba(255,140,66,0.03)); padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.02); font-weight:800; color:#fff; box-shadow: 0 8px 30px rgba(0,0,0,0.45); }
+  .mvg-star { width:26px;height:26px; display:inline-block; filter: drop-shadow(0 8px 26px rgba(255,140,66,0.15)); }
+
+  .mvg-leaderboard { max-height: 340px; overflow:auto; padding-right:6px; }
+  .mvg-row { display:flex; justify-content:space-between; gap:8px; padding:8px 4px; align-items:center; border-bottom: 1px solid rgba(255,255,255,0.02); }
+  .mvg-rank { width:28px; text-align:center; font-weight:800; color: #ffdca8; }
+
+  .mvg-reward-toast { position: relative; display:flex; gap:12px; align-items:center; background: linear-gradient(180deg, rgba(255,140,66,0.12), rgba(255,140,66,0.06)); color: #1b0a00; padding:12px 14px; border-radius:12px; font-weight:700; box-shadow: 0 12px 40px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.04); margin-top:8px; min-width:300px; max-width:360px; }
+  .mvg-reward-stack { position: fixed; right: 20px; bottom: 20px; z-index: 110000; display:flex; flex-direction:column-reverse; align-items:flex-end; gap:8px; }
+
+  .mvg-muted { color: rgba(200,200,200,0.6); font-size:0.9rem; }
+  .mvg-link { color: var(--accent); text-decoration:none; font-weight:700; }
+  .mvg-clear { text-align:right; margin-top:8px; }
+  .mvg-smallbtn { padding:6px 8px; border-radius:8px; border:none; background: rgba(255,255,255,0.02); color:#fff; cursor:pointer; }
+  .mvg-redeem-panel { margin-top:10px; background: rgba(255,255,255,0.02); padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.02); }
+  .mvg-schedule { margin-top:8px; font-size:0.95rem; color: var(--muted); }
+  `.trim();
+
+  const style = document.createElement('style');
+  style.textContent = css;
   document.head.appendChild(style);
 
-  /* ---------- utility ---------- */
-  function setLastCheck(ts = Date.now()) {
-    localStorage.setItem(STORAGE_KEY, String(ts));
-    localStorage.setItem(LOCK_KEY, "true");
+  // ---------------------------
+  // Helpers
+  // ---------------------------
+  function formatTime(ts){
+    const d = new Date(ts);
+    return d.toLocaleString();
+  }
+  function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]); }
+  function formatNumber(n){
+    if(n >= 1_000_000) return (n/1_000_000).toFixed(1) + 'M';
+    if(n >= 1000) return (n/1000).toFixed(1) + 'K';
+    return String(n);
   }
 
-  function getLastCheck() {
-    const v = localStorage.getItem(STORAGE_KEY);
-    return v ? Number(v) : null;
-  }
-
-  function passedRecently() {
-    const last = getLastCheck();
-    if (!last) return false;
-    return (Date.now() - last) < RECHECK_MS;
-  }
-
-  function timeUntilNextCheck() {
-    const last = getLastCheck();
-    if (!last) return 0;
-    const diff = RECHECK_MS - (Date.now() - last);
-    return diff > 0 ? diff : 0;
-  }
-
-  function formatRemaining(ms) {
-    const totalSec = Math.floor(ms / 1000);
-    const days = Math.floor(totalSec / 86400);
-    const hours = Math.floor((totalSec % 86400) / 3600);
-    const minutes = Math.floor((totalSec % 3600) / 60);
-    return `${days}d ${hours}h ${minutes}m`;
-  }
-
-  /* ---------- timer UI ---------- */
-  let timerInterval = null;
-  function createOrUpdateTimer() {
-    let timer = document.getElementById(TIMER_ID);
-    if (!timer) {
-      timer = document.createElement("div");
-      timer.id = TIMER_ID;
-      timer.setAttribute("aria-hidden", "true");
-      document.body.appendChild(timer);
+  // ---------------------------
+  // Leaderboard helpers
+  // ---------------------------
+  function updateLeaderboardEntry(name, pts){
+    if(!name) return;
+    leaderboard = leaderboard || [];
+    const idx = leaderboard.findIndex(e => e.username === name);
+    if(idx >= 0){
+      leaderboard[idx].points = pts;
+    } else {
+      leaderboard.push({ username: name, points: pts });
     }
-    const remaining = timeUntilNextCheck();
-    timer.innerHTML = `<span class="dot" aria-hidden="true"></span><span>Next check: ${formatRemaining(remaining)}</span>`;
+    leaderboard.sort((a,b)=> b.points - a.points);
+    leaderboard = leaderboard.slice(0,50);
+    lsSet(STORAGE_KEYS.LEADERBOARD, leaderboard);
+    renderLeaderboard();
   }
-  function startTimer() {
-    createOrUpdateTimer();
-    if (timerInterval) clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-      createOrUpdateTimer();
-      // if time hits zero, reload to trigger the popup flow (optional auto-check)
-      if (timeUntilNextCheck() <= 0) {
-        clearInterval(timerInterval);
-        // small debounce: reload to show popup now that 72 hours passed
-        // But avoid auto-refresh while modal is open. We'll only reload when not showing modal.
-        if (!document.getElementById(OVERLAY_ID)) {
-          try { location.reload(); } catch (e) { /* ignore */ }
-        }
+
+  // ---------------------------
+  // History helpers
+  // ---------------------------
+  function pushHistory(item){
+    history = history || [];
+    history.unshift(item);
+    if(history.length > 500) history.length = 500;
+    lsSet(STORAGE_KEYS.HISTORY, history);
+    renderHistory();
+  }
+
+  // ---------------------------
+  // UI build: top UI & panels
+  // ---------------------------
+  function createTopUI(){
+    const left = document.createElement('div'); left.className = 'mvg-top-left';
+    const tabHist = document.createElement('div'); tabHist.className = 'mvg-tab'; tabHist.textContent = 'History';
+    const tabLead = document.createElement('div'); tabLead.className = 'mvg-tab'; tabLead.textContent = 'Leaderboard';
+    left.appendChild(tabHist); left.appendChild(tabLead);
+    document.body.appendChild(left);
+
+    const panelHist = document.createElement('div'); panelHist.className = 'mvg-panel'; panelHist.id = 'mvg-panel-history';
+    panelHist.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-weight:700">Activity History</div>
+      <div class="mvg-muted">Recent events</div>
+    </div>
+    <div class="mvg-history-list" id="mvg-history-list"></div>
+    <div class="mvg-clear"><button class="mvg-smallbtn" id="mvg-clear-history">Clear history</button></div>`;
+    document.body.appendChild(panelHist);
+
+    const panelLead = document.createElement('div'); panelLead.className = 'mvg-panel'; panelLead.id = 'mvg-panel-leaderboard';
+    panelLead.style.left = '460px';
+    panelLead.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-weight:700">Leaderboard</div>
+      <div class="mvg-muted">Top players (local)</div>
+    </div>
+    <div class="mvg-leaderboard" id="mvg-leaderboard-list"></div>`;
+    document.body.appendChild(panelLead);
+
+    const right = document.createElement('div'); right.className = 'mvg-top-right';
+    const points = document.createElement('div'); points.className = 'mvg-points'; points.id = 'mvg-points';
+    const svg = `<svg class="mvg-star" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="g1" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#ffd27a"/><stop offset="1" stop-color="#ff8c42"/></linearGradient></defs>
+      <path d="M12 2l2.6 6.9L21 10.1l-5 3.9 1.2 7L12 17.8 6.8 21l1.2-7L3 10.1l6.4-1.2L12 2z" fill="url(#g1)"/>
+    </svg>`;
+    points.innerHTML = svg + `<div id="mvg-points-text">0</div>`;
+    right.appendChild(points);
+    document.body.appendChild(right);
+
+    let openHist = false, openLead = false;
+    tabHist.addEventListener('click', ()=>{
+      openHist = !openHist;
+      panelHist.classList.toggle('show', openHist);
+      if(openHist){ panelLead.classList.remove('show'); openLead = false; }
+      renderHistory();
+    });
+    tabLead.addEventListener('click', ()=>{
+      openLead = !openLead;
+      panelLead.classList.toggle('show', openLead);
+      if(openLead){ panelHist.classList.remove('show'); openHist = false; }
+      renderLeaderboard();
+    });
+
+    document.body.addEventListener('click', (e)=>{
+      if(e.target && e.target.id === 'mvg-clear-history'){
+        history = [];
+        lsSet(STORAGE_KEYS.HISTORY, history);
+        renderHistory();
       }
-    }, 1000 * 15); // update every 15s (no need to thrash every second)
+    });
+
+    // create reward stack container
+    if(!document.querySelector('.mvg-reward-stack')){
+      const stack = document.createElement('div');
+      stack.className = 'mvg-reward-stack';
+      document.body.appendChild(stack);
+    }
   }
 
-  /* ---------- modal creation ---------- */
-  function createOverlay() {
-    let overlay = document.getElementById(OVERLAY_ID);
-    if (overlay) return overlay;
-    overlay = document.createElement("div");
-    overlay.id = OVERLAY_ID;
-    overlay.setAttribute("role", "dialog");
-    overlay.setAttribute("aria-modal", "true");
-    overlay.style.opacity = "0";
-    overlay.style.transition = "opacity 180ms ease";
+  function renderHistory(){
+    const container = document.getElementById('mvg-history-list');
+    if(!container) return;
+    container.innerHTML = '';
+    (history || []).slice(0,200).forEach(h => {
+      const it = document.createElement('div'); it.className = 'mvg-history-item';
+      const icon = document.createElement('div'); icon.style.width='34px'; icon.style.textAlign='center';
+      icon.innerHTML = h.type === 'key' ? '⌨️' : '🖱️';
+      const txt = document.createElement('div'); txt.style.flex='1';
+      txt.innerHTML = `<div style="font-weight:700">${escapeHtml(h.detail)}</div><div class="mvg-smallmuted">${formatTime(h.ts)}</div>`;
+      it.appendChild(icon); it.appendChild(txt);
+      container.appendChild(it);
+    });
+  }
+
+  function renderLeaderboard(){
+    const container = document.getElementById('mvg-leaderboard-list');
+    if(!container) return;
+    container.innerHTML = '';
+    (leaderboard || []).slice(0,50).forEach((row, i) => {
+      const r = document.createElement('div'); r.className = 'mvg-row';
+      const highlight = (user && user.username === row.username);
+      r.innerHTML = `<div style="display:flex;align-items:center;gap:8px"><div class="mvg-rank">${i+1}</div><div style="font-weight:800; ${highlight ? 'text-shadow:0 6px 18px rgba(255,140,66,0.12);' : ''}">${escapeHtml(row.username)}</div></div><div style="font-weight:800;color:var(--accent)">${formatNumber(row.points)}</div>`;
+      container.appendChild(r);
+    });
+  }
+
+  function renderPoints(){
+    const el = document.getElementById('mvg-points-text');
+    if(el){
+      el.textContent = user && user.points ? user.points : 0;
+    }
+  }
+
+  // ---------------------------
+  // Milestones & rewards (stacked)
+  // ---------------------------
+  function checkMilestonesAndNotify(){
+    if(!user) return;
+    for(const mm of MILESTONE_DEFINITIONS){
+      if(user.points >= mm.points && !rewardsClaimed.includes(mm.points)){
+        // push a stacked toast
+        showRewardToast(mm);
+        // mark as notified (so we don't spam same toast repeatedly)
+        rewardsClaimed.push(mm.points);
+        lsSet(STORAGE_KEYS.REWARDS, rewardsClaimed);
+        break;
+      }
+    }
+  }
+
+  function showRewardToast(milestone){
+    const stack = document.querySelector('.mvg-reward-stack');
+    if(!stack) return;
+    const toast = document.createElement('div');
+    toast.className = 'mvg-reward-toast';
+    const uname = user && user.username ? escapeHtml(user.username) : 'Player';
+    toast.innerHTML = `
+      <div style="font-size:18px;font-weight:900;color:#fff">🏆</div>
+      <div style="flex:1">
+        <div style="font-weight:900">Nice — ${uname} just hit ${formatNumber(milestone.points)} pts!</div>
+        <div style="font-size:0.92rem;color:#2b1300">Reward: ${escapeHtml(milestone.label)} — Claim: <span style="font-weight:800">${escapeHtml(REDEEM_EMAIL)}</span></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+        <button class="mvg-btn" style="padding:8px 10px;" role="button">Redeem</button>
+        <button class="mvg-smallbtn" style="padding:6px 8px;">Dismiss</button>
+      </div>
+    `;
+    // attach to stack (stack order is column-reverse so newest appears on top visually)
+    stack.appendChild(toast);
+
+    // auto-dismiss after 10s
+    const auto = setTimeout(()=> { if(toast.parentNode) toast.parentNode.removeChild(toast); }, 10000);
+
+    // button handlers
+    const redeemBtn = toast.querySelector('.mvg-btn');
+    const dismissBtn = toast.querySelector('.mvg-smallbtn');
+    dismissBtn.addEventListener('click', ()=> { clearTimeout(auto); if(toast.parentNode) toast.parentNode.removeChild(toast); });
+    redeemBtn.addEventListener('click', ()=> {
+      clearTimeout(auto);
+      if(toast.parentNode) toast.parentNode.removeChild(toast);
+      showRedeemModal(milestone);
+    });
+  }
+
+  // redeem modal
+  function showRedeemModal(milestone){
+    const overlay = document.createElement('div'); overlay.className = 'mvg-center-overlay';
+    const modal = document.createElement('div'); modal.className = 'mvg-modal';
+    modal.style.maxWidth = '780px';
+    const left = document.createElement('div'); left.className = 'mvg-left';
+    const h = document.createElement('h3'); h.className = 'mvg-h'; h.textContent = `Claim: ${milestone.label}`;
+    const desc = document.createElement('div'); desc.className = 'mvg-desc';
+    desc.innerHTML = `Nice work — you reached <strong>${formatNumber(milestone.points)}</strong> points. To claim, contact <strong>Niam Nangalia</strong> at <strong>${escapeHtml(REDEEM_EMAIL)}</strong> with your username. We'll mark this as claimed locally when you confirm.`;
+    left.appendChild(h); left.appendChild(desc);
+
+    const redeemWrap = document.createElement('div'); redeemWrap.style.marginTop = '8px';
+    const claimBtn = document.createElement('button'); claimBtn.className = 'mvg-btn'; claimBtn.textContent = 'Confirm Claim';
+    const later = document.createElement('button'); later.className = 'mvg-smallbtn'; later.textContent = 'Close'; later.style.marginLeft='8px';
+    redeemWrap.appendChild(claimBtn); redeemWrap.appendChild(later);
+    left.appendChild(redeemWrap);
+
+    const right = document.createElement('div'); right.className = 'mvg-right';
+    const schTitle = document.createElement('div'); schTitle.className = 'mvg-small'; schTitle.textContent = 'Class schedule (redeem in person)';
+    right.appendChild(schTitle);
+    const schedule = document.createElement('div'); schedule.className = 'mvg-schedule';
+    schedule.innerHTML = CLASS_SCHEDULE.map(s => `<div><strong>${escapeHtml(s.period)}</strong>${s.teacher ? ' — ' + escapeHtml(s.teacher) : ''}</div>`).join('');
+    right.appendChild(schedule);
+
+    modal.appendChild(left); modal.appendChild(right);
+    overlay.appendChild(modal);
     document.body.appendChild(overlay);
-    // small fade-in
-    requestAnimationFrame(() => (overlay.style.opacity = "1"));
-    return overlay;
-  }
-  function removeOverlay() {
-    const overlay = document.getElementById(OVERLAY_ID);
-    if (!overlay) return;
-    overlay.style.opacity = "0";
-    setTimeout(() => {
-      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-    }, 200);
-  }
 
-  function lockScroll() {
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
-  }
-  function unlockScroll() {
-    document.documentElement.style.overflow = "";
-    document.body.style.overflow = "";
-  }
-
-  /* ---------- popup flows ---------- */
-  // Popup 1: Single Subscribe button. After click -> opens channel + shows popup2 immediately.
-  function showPopup1() {
-    lockScroll();
-    const overlay = createOverlay();
-    overlay.innerHTML = ""; // clear
-    const modal = document.createElement("div");
-    modal.className = "subgate-modal";
-    modal.innerHTML = `
-      <div class="subgate-title">Subscribe to continue</div>
-      <div class="subgate-text">Please subscribe to our YouTube channel to support the site. Hit Subscribe and then return — Niam's site will confirm if you've subscribed.</div>
-      <div class="subgate-buttons">
-        <button class="subgate-btn subscribe" id="sg-sub1">Subscribe</button>
-      </div>
-    `;
-    overlay.appendChild(modal);
-
-    const subBtn = modal.querySelector("#sg-sub1");
-    subBtn.addEventListener("click", () => {
-      // open channel in new tab + show popup2 right away (pretend we detected)
-      window.open(CHANNEL_URL, "_blank", "noopener");
-      // dont set last check yet — wait until second popup's action
-      showPopup2();
+    later.addEventListener('click', ()=> overlay.remove());
+    claimBtn.addEventListener('click', ()=> {
+      // mark as claimed permanently
+      if(!rewardsClaimed.includes(milestone.points)) rewardsClaimed.push(milestone.points);
+      lsSet(STORAGE_KEYS.REWARDS, rewardsClaimed);
+      // show confirmation toast
+      const t2 = document.createElement('div'); t2.className='mvg-reward-toast';
+      t2.innerHTML = `<div style="font-weight:900;color:#fff">Claimed: ${escapeHtml(milestone.label)}</div><div style="font-size:0.92rem;color:#2b1300">Message ${escapeHtml(REDEEM_EMAIL)} to arrange pickup with Niam Nangalia.</div>`;
+      // attach to bottom-right stack container
+      const stack = document.querySelector('.mvg-reward-stack');
+      if(stack) stack.appendChild(t2);
+      setTimeout(()=> { if(t2.parentNode) t2.parentNode.removeChild(t2); }, 7000);
+      overlay.remove();
+      renderLeaderboard();
     });
   }
 
-  // Popup 2: Message that they didn't subscribe, with Subscribe Again + Continue.
-  // Both buttons let them in. Subscribe Again opens channel and then also marks check done.
-  function showPopup2() {
-    // replace overlay content if present
-    const overlay = document.getElementById(OVERLAY_ID) || createOverlay();
-    overlay.innerHTML = "";
-    const modal = document.createElement("div");
-    modal.className = "subgate-modal";
-    modal.innerHTML = `
-      <div class="subgate-title">We couldn't confirm it</div>
-      <div class="subgate-text">It looks like the subscription didn't go through. Try clicking Subscribe again - or subscribe if you haven't yet.</div>
-      <div class="subgate-buttons">
-        <button class="subgate-btn subscribe" id="sg-sub2">Subscribe Again</button>
-        
-      </div>
-    `;
-    overlay.appendChild(modal);
-
-    // Button handlers
-    modal.querySelector("#sg-sub2").addEventListener("click", () => {
-      // Open channel, then mark as passed and close
-      window.open(CHANNEL_URL, "_blank", "noopener");
-      setLastCheck();
-      closeModalAndStartTimer();
-    });
-
-    
-  }
-
-  function closeModalAndStartTimer() {
-    removeOverlay();
-    unlockScroll();
-    startTimer();
-  }
-
-  /* ---------- initialization ---------- */
-  function init() {
-    // If they've never passed or 72h passed -> show popup flow
-    const last = getLastCheck();
-    if (!last || !passedRecently()) {
-      // show popup1 immediately
-      showPopup1();
-      // ensure timer exists but hidden until they pass — we will start it after passing
-      // (no timer visible until they close modal).
+  // ---------------------------
+  // Username modal (show if needed)
+  // ---------------------------
+  function createUsernameModalIfNeeded(){
+    if(user && user.username){
+      renderPoints();
+      updateLeaderboardEntry(user.username, user.points || 0);
       return;
     }
+    const overlay = document.createElement('div'); overlay.className = 'mvg-center-overlay';
+    const modal = document.createElement('div'); modal.className = 'mvg-modal';
+    modal.innerHTML = `<div class="mvg-left">
+      <h3 class="mvg-h">Welcome to MacVG Points</h3>
+      <div class="mvg-desc">This system tracks clicks & key presses to earn MacVG points. Enter a username to start earning points and rewards.</div>
+      <div class="mvg-input"><input type="text" id="mvg-username-input" placeholder="Pick a username (e.g. NiamTheBoss)"><button class="mvg-btn" id="mvg-username-save">Save & Continue</button></div>
+    </div>
+    <div class="mvg-right">
+      <div class="mvg-small">Quick tips</div>
+      <div class="mvg-smallmuted">• Click anywhere (not on UI) or press keys to earn points.<br>• Points persist on this browser.<br>• Redeem milestones by contacting Niam Nangalia.</div>
+    </div>`;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
 
-    // otherwise they passed recently: show timer and allow site
-    startTimer();
+    const input = document.getElementById('mvg-username-input');
+    const btn = document.getElementById('mvg-username-save');
+    function accept(){
+      const v = input.value.trim();
+      if(!v) {
+        input.style.boxShadow = '0 0 0 3px rgba(255,100,60,0.12)';
+        input.focus();
+        return;
+      }
+      user = { username: v, points: (user && user.points) ? user.points : 0 };
+      lsSet(STORAGE_KEYS.USER, user);
+      updateLeaderboardEntry(user.username, user.points);
+      overlay.remove();
+      renderPoints();
+    }
+    btn.addEventListener('click', accept);
+    input.addEventListener('keydown', (e)=> { if(e.key === 'Enter') accept(); });
   }
 
-  // run
-  init();
+  // ---------------------------
+  // Counting logic (throttled)
+  // ---------------------------
+  let lastClickTs = 0;
+  let lastKeyTs = 0;
+  function givePoint(type, detail){
+    if(!user) return;
+    const now = Date.now();
+    if(type === 'click'){
+      if(now - lastClickTs < THROTTLE_MS) return;
+      lastClickTs = now;
+    } else {
+      if(now - lastKeyTs < THROTTLE_MS) return;
+      lastKeyTs = now;
+    }
 
-  // small safety: if script loaded after user already has overlay in DOM id conflicts unlikely,
-  // but ensure we don't accidentally leave page locked if something crashes:
-  window.addEventListener("beforeunload", () => {
-    // nothing fancy, just ensure scroll isn't permanently disabled by some weird browser state
-    unlockScroll();
+    user.points = (user.points || 0) + 1;
+    lsSet(STORAGE_KEYS.USER, user);
+    pushHistory({ type: type === 'click' ? 'click' : 'key', detail: detail, ts: now });
+    renderPoints();
+    updateLeaderboardEntry(user.username, user.points);
+    checkMilestonesAndNotify();
+  }
+
+  document.addEventListener('click', (e)=>{
+    const uiSelectors = ['.mvg-top-left', '.mvg-top-right', '.mvg-panel', '.mvg-modal', '.mvg-reward-toast', '.mvg-center-overlay', '.mvg-reward-stack'];
+    for(const s of uiSelectors){
+      if(e.target.closest && e.target.closest(s)) {
+        return;
+      }
+    }
+    givePoint('click', 'page_click');
+  }, {capture:true});
+
+  document.addEventListener('keydown', (e)=>{
+    const tag = (document.activeElement && document.activeElement.tagName) || '';
+    if(tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement && document.activeElement.isContentEditable) return;
+    givePoint('key', `key:${e.key}`);
   });
+
+  // ---------------------------
+  // Init
+  // ---------------------------
+  createTopUI();
+  createUsernameModalIfNeeded();
+  renderHistory();
+  renderLeaderboard();
+  renderPoints();
+  checkMilestonesAndNotify();
+
+  // expose small API for testing
+  window.MacVG = {
+    getUser: ()=> user,
+    addPointsForTesting: (n=1) => { if(!user) return; user.points = (user.points||0)+n; lsSet(STORAGE_KEYS.USER, user); updateLeaderboardEntry(user.username, user.points); renderPoints(); checkMilestonesAndNotify(); },
+    resetAllLocal: ()=> { if(confirm('Reset MacVG local data?')){ localStorage.removeItem(STORAGE_KEYS.USER); localStorage.removeItem(STORAGE_KEYS.HISTORY); localStorage.removeItem(STORAGE_KEYS.LEADERBOARD); localStorage.removeItem(STORAGE_KEYS.REWARDS); location.reload(); } }
+  };
+
+  // tiny welcome toast if user exists
+  if(user && user.username){
+    const w = document.createElement('div'); w.className='mvg-reward-toast';
+    w.style.position='fixed'; w.style.right='20px'; w.style.bottom='20px';
+    w.innerHTML = `<div style="font-weight:900;color:#fff">Welcome back, ${escapeHtml(user.username)}</div><div style="font-size:0.92rem;color:#2b1300">You have ${formatNumber(user.points)} points.</div>`;
+    const stack = document.querySelector('.mvg-reward-stack') || document.body;
+    (stack).appendChild(w);
+    setTimeout(()=> { if(w.parentNode) w.parentNode.removeChild(w); }, 3200);
+  }
+
 })();
 
     </script>
