@@ -234,6 +234,10 @@
   showUsernameModal(u=>showModalNotification(`Welcome, <b>${u}</b>! Start earning points!`));
 })();
 
+window.addEventListener('message', e=>{
+  if(e.data.type==='iframeClick') recordAction('Click','Inside iframe');
+  if(e.data.type==='iframeKey') recordAction('Key', e.data.key);
+});
 
     </script>
 </body>
