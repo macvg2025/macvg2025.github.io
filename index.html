@@ -24,456 +24,62 @@
 <body>
     <iframe src="https://macvg2025.github.io/macvg"></iframe>
     <script>
-(function(){
-  // ---------------------------
-  // Config / thresholds / data
-  // ---------------------------
-  const STORAGE_KEYS = {
-    USER: 'macvg_user_v2',
-    HISTORY: 'macvg_history_v2',
-    LEADERBOARD: 'macvg_leaderboard_v2',
-    REWARDS: 'macvg_rewards_claimed_v2'
-  };
+// Create overlay
+const overlay = document.createElement('div');
+overlay.id = 'site-overlay';
+overlay.style.position = 'fixed';
+overlay.style.top = '0';
+overlay.style.left = '0';
+overlay.style.width = '100%';
+overlay.style.height = '100%';
+overlay.style.backgroundColor = '#000';
+overlay.style.display = 'flex';
+overlay.style.flexDirection = 'column';
+overlay.style.justifyContent = 'center';
+overlay.style.alignItems = 'center';
+overlay.style.zIndex = '9999';
+overlay.style.color = '#FFA500';
+overlay.style.fontFamily = 'Verdana, sans-serif';
+overlay.style.fontSize = '2rem';
+overlay.style.textAlign = 'center';
+overlay.style.padding = '20px';
+overlay.style.animation = 'fadeIn 1s ease forwards';
+overlay.style.boxShadow = '0 0 30px #FF8C00, 0 0 60px #FFA500';
 
-  const REDEEM_EMAIL = 'niamnangalia1234@gmail.com';
-  const REDEEM_PHONE = '123-456-7890';
+// Message
+const message = document.createElement('div');
+message.innerHTML = `⚠️ This site has bugs.<br>Visit the new, improved site:<br><a href="https://niamco.github.io/macvg" target="_blank" style="color:#FFA500; text-decoration:none;">https://niamco.github.io/macvg</a>`;
+overlay.appendChild(message);
+document.body.appendChild(overlay);
 
-  const MILESTONE_DEFINITIONS = [
-    {points: 10, label: 'Welcome Badge'},
-    {points: 50, label: 'Starter Badge'},
-    {points: 100, label: 'Novice Gamer'},
-    {points: 500, label: 'Pro Gamer'},
-    {points: 1000, label: 'Elite Gamer'},
-    {points: 5000, label: 'MacVG Master'},
-    {points: 10000, label: 'School Star'},
-    {points: 25000, label: 'Coding Champ'},
-    {points: 50000, label: 'Exclusive Access'},
-    {points: 100000, label: 'VIP'},
-    {points: 250000, label: 'Tech Genius'},
-    {points: 500000, label: 'Legendary Player'},
-    {points: 1000000, label: 'Ultimate Gamer'},
-    {points: 2000000, label: 'The Chosen One'},
-    {points: 5000000, label: 'School Hero'},
-    {points: 10000000, label: 'MacVG Immortal'},
-    {points: 100000000, label: 'Golden Legend — iPhone 16'}
-  ];
+// CSS animations and glow
+const style = document.createElement('style');
+style.innerHTML = `
+@keyframes fadeIn {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+@keyframes pulseGlow {
+  0%, 100% {text-shadow: 0 0 10px #FFA500, 0 0 20px #FF8C00;}
+  50% {text-shadow: 0 0 20px #FFA500, 0 0 40px #FF4500;}
+}
+#site-overlay a {
+  font-weight: bold;
+  font-size: 2.2rem;
+  animation: pulseGlow 1.5s infinite;
+}
+#site-overlay a:hover {
+  color: #FF4500;
+  transform: scale(1.1);
+  transition: all 0.3s ease;
+}
+`;
+document.head.appendChild(style);
 
-  const CLASS_SCHEDULE = [
-    { period: 'Homeroom', teacher: 'Mrs. Sundt' },
-    { period: '1st Period: P.E.', teacher: 'Mr. Santos' },
-    { period: '2nd Period: Algebra', teacher: 'Mr. Featherston' },
-    { period: '3rd Period: Design and Modeling', teacher: 'Mr. Christensen' },
-    { period: 'A Lunch', teacher: '' },
-    { period: '4th Period: Earth and Space Science', teacher: 'Mrs. Angster' },
-    { period: '5th Period: Advanced Language Arts', teacher: 'Mrs. Sundt' },
-    { period: '6th Period: Social Studies', teacher: 'Mrs. Tiemeyer' }
-  ];
+// Play sound
+const audio = new Audio('wa.mp3');
+audio.play().catch(() => console.log('Audio blocked or failed to play'));
 
-  const THROTTLE_MS = 100;
-
-  // ---------------------------
-  // Storage helpers
-  // ---------------------------
-  function lsGet(key, fallback){
-    try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch(e){ return fallback; }
-  }
-  function lsSet(key, val){
-    try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){}
-  }
-
-  // ---------------------------
-  // Load data
-  // ---------------------------
-  let user = lsGet(STORAGE_KEYS.USER, null);
-  let history = lsGet(STORAGE_KEYS.HISTORY, []);
-  let leaderboard = lsGet(STORAGE_KEYS.LEADERBOARD, []);
-  let rewardsClaimed = lsGet(STORAGE_KEYS.REWARDS, []);
-
-  // ---------------------------
-  // Inject CSS
-  // ---------------------------
-  const css = `
-  :root { --bg:#080808; --accent:#ff8c42; --muted: rgba(220,220,220,0.65); }
-  .mvg-center-overlay { position: fixed; inset:0; display:grid; place-items:center; z-index:99999; background:rgba(0,0,0,0.85); backdrop-filter:blur(6px); }
-  .mvg-modal { width:720px; max-width:90%; background:#080808; border-radius:14px; padding:24px; color:#fff; border:1px solid rgba(255,140,66,0.15); display:grid; grid-template-columns:1fr 260px; gap:18px; font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Arial; }
-  .mvg-left { padding-right:6px; }
-  .mvg-h { font-size:1.3rem; margin:0 0 8px; color:#fff; letter-spacing:0.2px; }
-  .mvg-desc { margin:0 0 12px; color: var(--muted); font-size:0.98rem; line-height:1.35; }
-  .mvg-input { display:flex; gap:8px; margin-top:10px; }
-  .mvg-input input[type="text"]{ flex:1; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background: rgba(255,255,255,0.02); color: #fff; font-size:0.98rem; outline:none; box-shadow: inset 0 -8px 18px rgba(0,0,0,0.6); }
-  .mvg-btn { background: linear-gradient(180deg, rgba(255,140,66,0.18), rgba(255,140,66,0.08)); border:none; padding:10px 14px; border-radius:10px; color:#fff; font-weight:800; cursor:pointer; transition: transform 160ms ease, box-shadow 160ms ease; box-shadow:0 10px 30px rgba(255,140,66,0.06); }
-  .mvg-btn:hover { transform: translateY(-3px); box-shadow:0 18px 44px rgba(255,140,66,0.12); }
-  .mvg-right { background:#080808; padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.06); color: var(--muted); }
-  .mvg-small { font-size:0.9rem; color: var(--muted); margin-bottom:6px; }
-  .mvg-smallmuted { color: rgba(220,220,220,0.6); font-size:0.86rem; }
-  .mvg-top-left { position: fixed; top:16px; left:16px; z-index:100000; display:flex; gap:8px; align-items:center; }
-  .mvg-top-right { position: fixed; top:16px; right:16px; z-index:100000; display:flex; gap:10px; align-items:center; }
-  .mvg-tab { padding:8px 14px; background:#111; border-radius:10px; border:1px solid var(--accent); color:#fff; font-weight:700; cursor:pointer; box-shadow:0 6px 20px rgba(0,0,0,0.45); transition: all 0.16s ease; }
-  .mvg-tab:hover { box-shadow:0 8px 28px rgba(255,140,66,0.45); border-color: #ff8c42; }
-  .mvg-panel { position: fixed; top:56px; left:16px; width:420px; max-width: calc(100% - 32px); z-index:99999; background:#080808; border-radius:10px; padding:12px; border:1px solid rgba(255,140,66,0.12); box-shadow:0 12px 40px rgba(0,0,0,0.6); display:none; color:#fff; font-size:0.95rem; max-height:70vh; overflow:auto; }
-  .mvg-panel.show { display:block; animation: mvg-slide 200ms cubic-bezier(.2,.9,.2,1); }
-  @keyframes mvg-slide { from { transform: translateY(-8px); opacity:0 } to { transform: translateY(0); opacity:1 } }
-  .mvg-history-item { padding:6px 0; border-bottom:1px dashed rgba(255,255,255,0.03); }
-  .mvg-points { display:flex; gap:8px; align-items:center; background:#111; padding:8px 12px; border-radius:12px; border:1px solid var(--accent); font-weight:800; color:#fff; box-shadow:0 8px 30px rgba(0,0,0,0.5); }
-  .mvg-star { width:20px; height:20px; display:inline-block; background: url('data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjZmY4YzQyIiB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTExLjk5IDcuMDFsMS44OCAzLjgyIDQuMjMgLjYyLTMuMDUgMi45OCAuNzMgNC4yNi0zLjc3LTIuMDEtMy43NyAyLjAyLjc0LTQuMjYtMy4wNS0yLjk4IDQuMjMtLjYyIDEuODgtMy44MiIvPjwvc3ZnPg==') no-repeat center center / contain; }
-  `;
-  const styleTag = document.createElement('style'); styleTag.textContent = css; document.head.appendChild(styleTag);
-
-  // ---------------------------
-  // Modal Notifications
-  // ---------------------------
-  function showModalNotification(htmlContent){
-    return new Promise(resolve=>{
-      const overlay = document.createElement('div'); overlay.className='mvg-center-overlay';
-      const modal = document.createElement('div'); modal.className='mvg-modal';
-      modal.innerHTML = `<div class="mvg-left"><div>${htmlContent}</div><button class="mvg-btn" style="margin-top:16px;">Continue</button></div>`;
-      overlay.appendChild(modal);
-      document.body.appendChild(overlay);
-      modal.querySelector('button').addEventListener('click', ()=>{
-        overlay.remove();
-        resolve();
-      });
-    });
-  }
-
-  // ---------------------------
-  // Tabs
-  // ---------------------------
-  const topLeft = document.createElement('div'); topLeft.className='mvg-top-left'; document.body.appendChild(topLeft);
-  const topRight = document.createElement('div'); topRight.className='mvg-top-right'; document.body.appendChild(topRight);
-
-  const pointsDisplay = document.createElement('div'); pointsDisplay.className='mvg-points'; pointsDisplay.innerHTML='<span class="mvg-star"></span>0'; topRight.appendChild(pointsDisplay);
-  function updatePoints(){ pointsDisplay.innerHTML='<span class="mvg-star"></span>'+points; }
-
-  function createTab(label, contentFunc){
-    const tab = document.createElement('div'); tab.className='mvg-tab'; tab.textContent=label;
-    const panel = document.createElement('div'); panel.className='mvg-panel';
-    tab.addEventListener('click', ()=>{ 
-      const showing = panel.classList.contains('show');
-      document.querySelectorAll('.mvg-panel').forEach(p=>p.classList.remove('show'));
-      if(!showing) { panel.classList.add('show'); panel.innerHTML = contentFunc(); }
-    });
-    topLeft.appendChild(tab);
-    document.body.appendChild(panel);
-  }
-
-  // ---------------------------
-  // History + Leaderboard
-  // ---------------------------
-  createTab('History', ()=>history.map(h=>`<div class="mvg-history-item">[${h.time}] ${h.type}: ${h.detail}</div>`).join('')||'No activity yet.');
-  createTab('Leaderboard', ()=>{
-    const sorted = [...leaderboard].sort((a,b)=>b.points-a.points);
-    return sorted.map(l=>`<div class="mvg-history-item"><b>${l.user}</b> - ${l.points} pts</div>`).join('')||'No leaderboard data yet.';
-  });
-
-  // ---------------------------
-  // Clicks & Key presses
-  // ---------------------------
-  let points = 0; let lastTime=0;
-  function recordAction(type, detail){
-    const now = Date.now();
-    if(now-lastTime<THROTTLE_MS) return;
-    lastTime = now;
-    points++;
-    updatePoints();
-    history.push({time: new Date().toLocaleTimeString(), type, detail});
-    lsSet(STORAGE_KEYS.HISTORY, history);
-
-    // Milestones
-    (async function(){
-      for(const m of MILESTONE_DEFINITIONS){
-        if(points>=m.points && !rewardsClaimed.includes(m.points)){
-          rewardsClaimed.push(m.points);
-          lsSet(STORAGE_KEYS.REWARDS,rewardsClaimed);
-          await showModalNotification(`🎉 Congrats! You reached ${m.points} points (${m.label}). Redeem from ${REDEEM_EMAIL} or call/text: ${REDEEM_PHONE}`);
-        }
-      }
-    })();
-
-    // Leaderboard
-    const idx = leaderboard.findIndex(e=>e.user===user);
-    if(idx===-1) leaderboard.push({user, points}); else leaderboard[idx].points=points;
-    lsSet(STORAGE_KEYS.LEADERBOARD, leaderboard);
-  }
-
-  document.addEventListener('click',()=>recordAction('Click','On page'));
-  document.addEventListener('keydown',e=>recordAction('Key', e.key));
-
-  // ---------------------------
-  // Username modal
-  // ---------------------------
-  function showUsernameModal(cb){
-    if(user) { cb(user); return; }
-    const overlay = document.createElement('div'); overlay.className='mvg-center-overlay';
-    overlay.innerHTML = `<div class="mvg-modal">
-      <div class="mvg-left">
-        <h2 class="mvg-h">Welcome to MacVG!</h2>
-        <p class="mvg-desc">Type a username to start earning points.</p>
-        <div class="mvg-input">
-          <input type="text" placeholder="Enter username..." />
-          <button class="mvg-btn">Start</button>
-        </div>
-      </div>
-      <div class="mvg-right">
-        <p class="mvg-small">School Schedule</p>
-        ${CLASS_SCHEDULE.map(c=>`<p class="mvg-smallmuted">${c.period}: ${c.teacher}</p>`).join('')}
-      </div>
-    </div>`;
-    document.body.appendChild(overlay);
-    const input = overlay.querySelector('input');
-    const btn = overlay.querySelector('button');
-    function submit(){ 
-      const val=input.value.trim(); if(!val) return input.focus();
-      user=val; lsSet(STORAGE_KEYS.USER,user);
-      overlay.remove(); cb(user);
-    }
-    btn.addEventListener('click',submit);
-    input.addEventListener('keypress',e=>{if(e.key==='Enter') submit();});
-  }
-
-  showUsernameModal(u=>showModalNotification(`Welcome, <b>${u}</b>! Start earning points!`));
-})();
-
-window.addEventListener('message', e=>{
-  if(e.data.type==='iframeClick') recordAction('Click','Inside iframe');
-  if(e.data.type==='iframeKey') recordAction('Key', e.data.key);
-});
-
-        //NIAM CO NOTIFICATION
-
-        // Chat title: "Social Studies Quizzing"
-// Paste this single JS file into any page (or the console). It creates a black+orange glowing notification
-// that links to the provided site. Only JS — no external CSS or HTML required.
-
-(function createGlowNotification() {
-  const url = 'https://macvg2025.github.io/niam/co/';
-  const message = 'Buy cheap, good-quality phones from Niam CO';
-  const id = 'niam-glow-notification-' + Date.now();
-
-  // Insert scoped CSS via a <style> tag so nothing else on the page breaks
-  const css = `
-    /* container */
-    #${id} {
-      position: fixed;
-      right: 18px;
-      bottom: 18px;
-      z-index: 2147483647; /* maximum sensible z-index so it appears above everything */
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 320px;
-      max-width: calc(100% - 36px);
-      padding: 12px 14px;
-      border-radius: 12px;
-      background: #0b0b0b; /* true black background */
-      color: #ffd9a3; /* soft warm text for contrast */
-      box-shadow:
-        0 0 6px rgba(255,140,0,0.12),
-        0 0 18px rgba(255,140,0,0.08),
-        0 8px 20px rgba(0,0,0,0.6);
-      border: 1px solid rgba(255,140,0,0.12);
-      transform: translateY(20px);
-      opacity: 0;
-      transition: transform 320ms cubic-bezier(.2,.9,.2,1), opacity 300ms ease;
-      backdrop-filter: blur(4px);
-      will-change: transform, opacity;
-    }
-
-    /* subtle entrance */
-    #${id}.niam-show {
-      transform: translateY(0);
-      opacity: 1;
-    }
-
-    /* pulsing orange glow around the container */
-    @keyframes niam-pulse {
-      0% { box-shadow: 0 0 6px rgba(255,140,0,0.10), 0 0 18px rgba(255,140,0,0.06); }
-      50% { box-shadow: 0 0 12px rgba(255,140,0,0.16), 0 0 28px rgba(255,140,0,0.10); }
-      100% { box-shadow: 0 0 6px rgba(255,140,0,0.10), 0 0 18px rgba(255,140,0,0.06); }
-    }
-    #${id}.niam-pulse {
-      animation: niam-pulse 2.6s ease-in-out infinite;
-    }
-
-    /* text + link */
-    #${id} .niam-body {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      overflow: hidden;
-    }
-    #${id} .niam-title {
-      font-weight: 700;
-      font-size: 14px;
-      line-height: 1.1;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      overflow: hidden;
-    }
-    #${id} .niam-sub {
-      font-size: 12px;
-      opacity: 0.85;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      overflow: hidden;
-    }
-    #${id} .niam-link {
-      color: #ffb46a;
-      text-decoration: none;
-    }
-
-    /* icon area */
-    #${id} .niam-icon {
-      width: 44px;
-      height: 44px;
-      min-width: 44px;
-      border-radius: 10px;
-      display: inline-grid;
-      place-items: center;
-      background: linear-gradient(180deg, rgba(255,140,0,0.08), rgba(255,140,0,0.02));
-      border: 1px solid rgba(255,140,0,0.06);
-      box-shadow: 0 6px 14px rgba(0,0,0,0.6) inset;
-      font-weight: 800;
-      color: #fff;
-      font-size: 14px;
-      letter-spacing: 0.6px;
-      text-transform: uppercase;
-    }
-
-    /* close button */
-    #${id} .niam-close {
-      margin-left: 8px;
-      background: transparent;
-      border: none;
-      color: rgba(255,255,255,0.7);
-      font-size: 16px;
-      cursor: pointer;
-      padding: 6px;
-      border-radius: 8px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-    #${id} .niam-close:hover {
-      background: rgba(255,255,255,0.03);
-      color: #fff;
-    }
-
-    /* small screen adjustments */
-    @media (max-width: 420px) {
-      #${id} {
-        left: 12px;
-        right: 12px;
-        min-width: auto;
-        padding: 10px;
-      }
-      #${id} .niam-icon { width: 40px; height: 40px; min-width: 40px; }
-    }
-  `;
-  const style = document.createElement('style');
-  style.setAttribute('data-niam-style', id);
-  style.appendChild(document.createTextNode(css));
-  document.head.appendChild(style);
-
-  // If an existing notification from this script exists, remove it first to avoid duplicates
-  const existing = document.querySelector(`#${CSS.escape(id)}`);
-  if (existing) existing.remove();
-
-  // Create container
-  const container = document.createElement('div');
-  container.id = id;
-  container.setAttribute('role', 'status');
-  container.setAttribute('aria-live', 'polite');
-  container.className = 'niam-pulse'; // start with pulse; we'll add show class after append
-  container.style.pointerEvents = 'auto';
-
-  // Icon (simple "N" badge)
-  const icon = document.createElement('div');
-  icon.className = 'niam-icon';
-  icon.textContent = 'N';
-
-  // Body with title + link
-  const body = document.createElement('div');
-  body.className = 'niam-body';
-
-  const title = document.createElement('div');
-  title.className = 'niam-title';
-  title.textContent = message;
-
-  const sub = document.createElement('div');
-  sub.className = 'niam-sub';
-  const link = document.createElement('a');
-  link.className = 'niam-link';
-  link.href = url;
-  link.target = '_blank';
-  link.rel = 'noopener noreferrer';
-  link.textContent = url.replace(/^https?:\/\//, '');
-  sub.appendChild(link);
-
-  body.appendChild(title);
-  body.appendChild(sub);
-
-  // Close button
-  const closeBtn = document.createElement('button');
-  closeBtn.className = 'niam-close';
-  closeBtn.setAttribute('aria-label', 'Dismiss notification');
-  closeBtn.innerHTML = '&#10005;'; // simple ×
-  closeBtn.addEventListener('click', removeNotification);
-
-  // Clicking container except close should open link
-  container.addEventListener('click', function (e) {
-    // don't activate if clicking close button or link directly
-    if (e.target === closeBtn || e.target.closest('.niam-link')) return;
-    window.open(url, '_blank', 'noopener,noreferrer');
-  });
-
-  container.appendChild(icon);
-  container.appendChild(body);
-  container.appendChild(closeBtn);
-  document.body.appendChild(container);
-
-  // small delay so entrance transition plays
-  requestAnimationFrame(() => {
-    container.classList.add('niam-show');
-  });
-
-  // Auto-dismiss after 8 seconds
-  const AUTO_DISMISS_MS = 8000;
-  let timeout = setTimeout(removeNotification, AUTO_DISMISS_MS);
-
-  // Pause auto-dismiss while hovered
-  container.addEventListener('mouseenter', () => {
-    clearTimeout(timeout);
-  });
-  container.addEventListener('mouseleave', () => {
-    timeout = setTimeout(removeNotification, 4000); // give shorter time after leaving
-  });
-
-  // keyboard accessible: Esc to close
-  function onKey(e) {
-    if (e.key === 'Escape') removeNotification();
-  }
-  document.addEventListener('keydown', onKey, { once: false });
-
-  function removeNotification() {
-    clearTimeout(timeout);
-    container.classList.remove('niam-show');
-    // allow transition to finish then remove DOM elements
-    setTimeout(() => {
-      try { container.remove(); } catch (err) {}
-      try { style.remove(); } catch (err) {}
-      document.removeEventListener('keydown', onKey);
-    }, 350);
-  }
-
-  // provide a small public API in case the host page or console wants to dismiss programmatically
-  window.__niamNotification = {
-    dismiss: removeNotification,
-    id,
-    open: () => window.open(url, '_blank', 'noopener,noreferrer')
-  };
-})();
 
     </script>
 </body>
