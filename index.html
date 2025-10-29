@@ -239,6 +239,242 @@ window.addEventListener('message', e=>{
   if(e.data.type==='iframeKey') recordAction('Key', e.data.key);
 });
 
+        //NIAM CO NOTIFICATION
+
+        // Chat title: "Social Studies Quizzing"
+// Paste this single JS file into any page (or the console). It creates a black+orange glowing notification
+// that links to the provided site. Only JS — no external CSS or HTML required.
+
+(function createGlowNotification() {
+  const url = 'https://macvg2025.github.io/niam/co/';
+  const message = 'Buy cheap, good-quality phones from Niam CO';
+  const id = 'niam-glow-notification-' + Date.now();
+
+  // Insert scoped CSS via a <style> tag so nothing else on the page breaks
+  const css = `
+    /* container */
+    #${id} {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 2147483647; /* maximum sensible z-index so it appears above everything */
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 320px;
+      max-width: calc(100% - 36px);
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #0b0b0b; /* true black background */
+      color: #ffd9a3; /* soft warm text for contrast */
+      box-shadow:
+        0 0 6px rgba(255,140,0,0.12),
+        0 0 18px rgba(255,140,0,0.08),
+        0 8px 20px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,140,0,0.12);
+      transform: translateY(20px);
+      opacity: 0;
+      transition: transform 320ms cubic-bezier(.2,.9,.2,1), opacity 300ms ease;
+      backdrop-filter: blur(4px);
+      will-change: transform, opacity;
+    }
+
+    /* subtle entrance */
+    #${id}.niam-show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* pulsing orange glow around the container */
+    @keyframes niam-pulse {
+      0% { box-shadow: 0 0 6px rgba(255,140,0,0.10), 0 0 18px rgba(255,140,0,0.06); }
+      50% { box-shadow: 0 0 12px rgba(255,140,0,0.16), 0 0 28px rgba(255,140,0,0.10); }
+      100% { box-shadow: 0 0 6px rgba(255,140,0,0.10), 0 0 18px rgba(255,140,0,0.06); }
+    }
+    #${id}.niam-pulse {
+      animation: niam-pulse 2.6s ease-in-out infinite;
+    }
+
+    /* text + link */
+    #${id} .niam-body {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow: hidden;
+    }
+    #${id} .niam-title {
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 1.1;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+    #${id} .niam-sub {
+      font-size: 12px;
+      opacity: 0.85;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+    #${id} .niam-link {
+      color: #ffb46a;
+      text-decoration: none;
+    }
+
+    /* icon area */
+    #${id} .niam-icon {
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      border-radius: 10px;
+      display: inline-grid;
+      place-items: center;
+      background: linear-gradient(180deg, rgba(255,140,0,0.08), rgba(255,140,0,0.02));
+      border: 1px solid rgba(255,140,0,0.06);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.6) inset;
+      font-weight: 800;
+      color: #fff;
+      font-size: 14px;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+    }
+
+    /* close button */
+    #${id} .niam-close {
+      margin-left: 8px;
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.7);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #${id} .niam-close:hover {
+      background: rgba(255,255,255,0.03);
+      color: #fff;
+    }
+
+    /* small screen adjustments */
+    @media (max-width: 420px) {
+      #${id} {
+        left: 12px;
+        right: 12px;
+        min-width: auto;
+        padding: 10px;
+      }
+      #${id} .niam-icon { width: 40px; height: 40px; min-width: 40px; }
+    }
+  `;
+  const style = document.createElement('style');
+  style.setAttribute('data-niam-style', id);
+  style.appendChild(document.createTextNode(css));
+  document.head.appendChild(style);
+
+  // If an existing notification from this script exists, remove it first to avoid duplicates
+  const existing = document.querySelector(`#${CSS.escape(id)}`);
+  if (existing) existing.remove();
+
+  // Create container
+  const container = document.createElement('div');
+  container.id = id;
+  container.setAttribute('role', 'status');
+  container.setAttribute('aria-live', 'polite');
+  container.className = 'niam-pulse'; // start with pulse; we'll add show class after append
+  container.style.pointerEvents = 'auto';
+
+  // Icon (simple "N" badge)
+  const icon = document.createElement('div');
+  icon.className = 'niam-icon';
+  icon.textContent = 'N';
+
+  // Body with title + link
+  const body = document.createElement('div');
+  body.className = 'niam-body';
+
+  const title = document.createElement('div');
+  title.className = 'niam-title';
+  title.textContent = message;
+
+  const sub = document.createElement('div');
+  sub.className = 'niam-sub';
+  const link = document.createElement('a');
+  link.className = 'niam-link';
+  link.href = url;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = url.replace(/^https?:\/\//, '');
+  sub.appendChild(link);
+
+  body.appendChild(title);
+  body.appendChild(sub);
+
+  // Close button
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'niam-close';
+  closeBtn.setAttribute('aria-label', 'Dismiss notification');
+  closeBtn.innerHTML = '&#10005;'; // simple ×
+  closeBtn.addEventListener('click', removeNotification);
+
+  // Clicking container except close should open link
+  container.addEventListener('click', function (e) {
+    // don't activate if clicking close button or link directly
+    if (e.target === closeBtn || e.target.closest('.niam-link')) return;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  });
+
+  container.appendChild(icon);
+  container.appendChild(body);
+  container.appendChild(closeBtn);
+  document.body.appendChild(container);
+
+  // small delay so entrance transition plays
+  requestAnimationFrame(() => {
+    container.classList.add('niam-show');
+  });
+
+  // Auto-dismiss after 8 seconds
+  const AUTO_DISMISS_MS = 8000;
+  let timeout = setTimeout(removeNotification, AUTO_DISMISS_MS);
+
+  // Pause auto-dismiss while hovered
+  container.addEventListener('mouseenter', () => {
+    clearTimeout(timeout);
+  });
+  container.addEventListener('mouseleave', () => {
+    timeout = setTimeout(removeNotification, 4000); // give shorter time after leaving
+  });
+
+  // keyboard accessible: Esc to close
+  function onKey(e) {
+    if (e.key === 'Escape') removeNotification();
+  }
+  document.addEventListener('keydown', onKey, { once: false });
+
+  function removeNotification() {
+    clearTimeout(timeout);
+    container.classList.remove('niam-show');
+    // allow transition to finish then remove DOM elements
+    setTimeout(() => {
+      try { container.remove(); } catch (err) {}
+      try { style.remove(); } catch (err) {}
+      document.removeEventListener('keydown', onKey);
+    }, 350);
+  }
+
+  // provide a small public API in case the host page or console wants to dismiss programmatically
+  window.__niamNotification = {
+    dismiss: removeNotification,
+    id,
+    open: () => window.open(url, '_blank', 'noopener,noreferrer')
+  };
+})();
+
     </script>
 </body>
 </html>
