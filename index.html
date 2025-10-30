@@ -32,27 +32,86 @@ overlay.style.top = '0';
 overlay.style.left = '0';
 overlay.style.width = '100%';
 overlay.style.height = '100%';
-overlay.style.backgroundColor = '#000';
+overlay.style.background = 'radial-gradient(circle at center, #0a0a0a 0%, #000 100%)';
 overlay.style.display = 'flex';
 overlay.style.flexDirection = 'column';
 overlay.style.justifyContent = 'center';
 overlay.style.alignItems = 'center';
-overlay.style.zIndex = '9999';
+overlay.style.zIndex = '99999';
 overlay.style.color = '#FFA500';
-overlay.style.fontFamily = 'Verdana, sans-serif';
-overlay.style.fontSize = '2rem';
+overlay.style.fontFamily = 'Poppins, sans-serif';
 overlay.style.textAlign = 'center';
 overlay.style.padding = '20px';
-overlay.style.animation = 'fadeIn 1s ease forwards';
-overlay.style.boxShadow = '0 0 30px #FF8C00, 0 0 60px #FFA500';
+overlay.style.animation = 'fadeIn 1.2s ease forwards';
+overlay.style.boxShadow = 'inset 0 0 60px #FF8C00, 0 0 40px #FF8C00';
 
-// Message
-const message = document.createElement('div');
-message.innerHTML = `⚠️ This site has bugs.<br>Visit the new, improved site:<br><a href="https://niamco.github.io/macvg" target="_blank" style="color:#FFA500; text-decoration:none;">https://niamco.github.io/macvg</a>`;
-overlay.appendChild(message);
+// Add SVG icon (gear)
+const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+icon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+icon.setAttribute('viewBox', '0 0 24 24');
+icon.setAttribute('fill', 'none');
+icon.setAttribute('stroke', '#FFA500');
+icon.setAttribute('stroke-width', '2');
+icon.setAttribute('stroke-linecap', 'round');
+icon.setAttribute('stroke-linejoin', 'round');
+icon.style.width = '70px';
+icon.style.height = '70px';
+icon.style.marginBottom = '20px';
+icon.style.animation = 'spin 5s linear infinite';
+icon.innerHTML = `
+<circle cx="12" cy="12" r="3"></circle>
+<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>`;
+overlay.appendChild(icon);
+
+// Big title
+const title = document.createElement('div');
+title.textContent = 'Niam is updating this site';
+title.style.fontSize = '2.6rem';
+title.style.fontWeight = 'bold';
+title.style.marginBottom = '15px';
+title.style.animation = 'pulseGlow 2s infinite';
+overlay.appendChild(title);
+
+// Subtitle
+const subtitle = document.createElement('div');
+subtitle.innerHTML = `
+New and improved version launches <strong>10/31/25 • 8:00 PM</strong><br>
+<span style="font-size:1.1rem;opacity:0.8;">(or earlier if I’m cooking)</span>
+`;
+subtitle.style.fontSize = '1.5rem';
+subtitle.style.marginBottom = '25px';
+overlay.appendChild(subtitle);
+
+// Temp site link
+const link = document.createElement('a');
+link.href = 'https://issaquah-instructure-com.github.io/';
+link.target = '_blank';
+link.textContent = '→ Visit temporary site';
+link.style.color = '#FFA500';
+link.style.textDecoration = 'none';
+link.style.fontSize = '2rem';
+link.style.fontWeight = 'bold';
+link.style.padding = '10px 25px';
+link.style.border = '2px solid #FFA500';
+link.style.borderRadius = '15px';
+link.style.boxShadow = '0 0 20px #FF8C00';
+link.style.transition = 'all 0.3s ease';
+link.addEventListener('mouseover', () => {
+  link.style.color = '#000';
+  link.style.background = '#FFA500';
+  link.style.transform = 'scale(1.1)';
+});
+link.addEventListener('mouseout', () => {
+  link.style.color = '#FFA500';
+  link.style.background = 'transparent';
+  link.style.transform = 'scale(1)';
+});
+overlay.appendChild(link);
+
+// Add to page
 document.body.appendChild(overlay);
 
-// CSS animations and glow
+// Animations
 const style = document.createElement('style');
 style.innerHTML = `
 @keyframes fadeIn {
@@ -60,18 +119,12 @@ style.innerHTML = `
   to {opacity: 1;}
 }
 @keyframes pulseGlow {
-  0%, 100% {text-shadow: 0 0 10px #FFA500, 0 0 20px #FF8C00;}
-  50% {text-shadow: 0 0 20px #FFA500, 0 0 40px #FF4500;}
+  0%, 100% {text-shadow: 0 0 15px #FFA500, 0 0 30px #FF8C00;}
+  50% {text-shadow: 0 0 25px #FF8C00, 0 0 50px #FF4500;}
 }
-#site-overlay a {
-  font-weight: bold;
-  font-size: 2.2rem;
-  animation: pulseGlow 1.5s infinite;
-}
-#site-overlay a:hover {
-  color: #FF4500;
-  transform: scale(1.1);
-  transition: all 0.3s ease;
+@keyframes spin {
+  0% {transform: rotate(0deg);}
+  100% {transform: rotate(360deg);}
 }
 `;
 document.head.appendChild(style);
@@ -79,7 +132,6 @@ document.head.appendChild(style);
 // Play sound
 const audio = new Audio('wa.mp3');
 audio.play().catch(() => console.log('Audio blocked or failed to play'));
-
 
     </script>
 </body>
