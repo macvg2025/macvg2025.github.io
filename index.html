@@ -1,4 +1,11 @@
-// === Overlay ===
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <title>Blank Page</title>
+</head>
+<script>
+  // === Overlay ===
 const overlay = document.createElement('div');
 overlay.style.cssText = `
   position: fixed;
@@ -148,3 +155,6 @@ document.body.appendChild(overlay);
 // === Sound ===
 const audio = new Audio('ty.mp3');
 audio.play().catch(() => console.warn("Autoplay blocked — user interaction required."));
+
+</script>
+</html>
