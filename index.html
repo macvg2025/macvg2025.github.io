@@ -2,8 +2,29 @@
 <html lang="en">
 <head>
    <meta charset="UTF-8">
-   <title>Blank Page</title>
+   <title>Dashboard</title>
+   <link rel="icon" type="image/x-icon" href="https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico" />
 </head>
+   <style>
+      html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden; /* optional: hides browser scrollbars */
+}
+
+iframe {
+  position: fixed;  /* stay in place even if page scrolls */
+  top: 0;
+  left: 0;
+  width: 100vw;     /* full viewport width */
+  height: 100vh;    /* full viewport height */
+  border: none;     /* remove iframe border */    /* optional: bring it above other content */
+}
+
+   </style>
+   <body>
+      <iframe src="https://macvg2025.github.io/macvg"></iframe>
 <script>
   // === Overlay ===
 const overlay = document.createElement('div');
@@ -157,4 +178,5 @@ const audio = new Audio('ty.mp3');
 audio.play().catch(() => console.warn("Autoplay blocked — user interaction required."));
 
 </script>
+   </body>
 </html>
