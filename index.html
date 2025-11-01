@@ -1,30 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    
-    <meta charset="UTF-8">
-    <title>Dashboard</title>
-  <link rel="icon" type="image/x-icon" href="https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico" />
-
-    <style>
-        /* Remove default margins and paddings */
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-        /* Make iframe fill the entire viewport */
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-    </style>
-</head>
-<body>
-    <iframe src="https://macvg2025.github.io/macvg"></iframe>
-    <script>
-        // === Overlay ===
+// === Overlay ===
 const overlay = document.createElement('div');
 overlay.style.cssText = `
   position: fixed;
@@ -50,38 +24,51 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// === Top GIF (swe.gif) ===
+// === Top GIF (swe.gif) with caption ===
 const gifTop = document.createElement('div');
 gifTop.style.cssText = `
   background: #111;
   border: 2px solid #ff8c00;
   border-radius: 20px;
   padding: 10px;
-  box-shadow: 0 0 20px #ff8c00;
-  margin-bottom: 25px;
+  box-shadow: 0 0 25px #ff8c00;
+  margin-bottom: 30px;
   animation: floaty 4s ease-in-out infinite;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 `;
 
 const swe = document.createElement('img');
 swe.src = 'swe.gif';
 swe.alt = 'Construction';
 swe.style.cssText = `
-  width: 180px;
-  border-radius: 15px;
+  width: 220px; /* bigger */
+  border-radius: 20px;
   display: block;
 `;
+
+const caption = document.createElement('span');
+caption.textContent = "me at 3am";
+caption.style.cssText = `
+  margin-top: 8px;
+  font-size: 1rem;
+  color: #FFA500;
+  text-shadow: 0 0 15px #ff8c00;
+`;
+
 gifTop.appendChild(swe);
+gifTop.appendChild(caption);
 overlay.appendChild(gifTop);
 
 // === Title Area with Jackhammer ===
 const titleContainer = document.createElement('div');
 titleContainer.style.cssText = `
   display: flex;
-  align-items: flex-start; /* align top of jackhammer closer to text */
+  align-items: flex-start;
   justify-content: center;
-  gap: -30px; /* move jackhammer left into the text */
-  margin-bottom: 15px;
-  position: relative;
+  gap: -40px; /* jackhammer overlaps text */
+  margin-bottom: 20px;
 `;
 
 const title = document.createElement('h1');
@@ -89,7 +76,7 @@ title.textContent = "Niam is rebuilding this site";
 title.style.cssText = `
   font-size: 2.8rem;
   margin: 0;
-  text-shadow: 0 0 20px #ff8c00;
+  text-shadow: 0 0 25px #ff8c00;
   color: #FFA500;
 `;
 
@@ -98,10 +85,10 @@ const jackhammer = document.createElement('img');
 jackhammer.src = 'swee.gif';
 jackhammer.alt = 'Jackhammer';
 jackhammer.style.cssText = `
-  width: 100px;
-  transform: rotate(-25deg);
-  margin-top: 10px; /* nudge down to overlap text */
-  filter: drop-shadow(0 0 20px #ff8c00);
+  width: 140px; /* bigger */
+  transform: rotate(-45deg); /* angled more to the left */
+  margin-top: 15px; /* slightly lower to touch text */
+  filter: drop-shadow(0 0 25px #ff8c00);
   animation: floaty 1.2s ease-in-out infinite;
 `;
 
@@ -161,7 +148,3 @@ document.body.appendChild(overlay);
 // === Sound ===
 const audio = new Audio('ty.mp3');
 audio.play().catch(() => console.warn("Autoplay blocked — user interaction required."));
-
-    </script>
-</body>
-</html>
