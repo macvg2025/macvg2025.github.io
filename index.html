@@ -24,114 +24,143 @@
 <body>
     <iframe src="https://macvg2025.github.io/macvg"></iframe>
     <script>
-// Create overlay
+        // === Overlay ===
 const overlay = document.createElement('div');
-overlay.id = 'site-overlay';
-overlay.style.position = 'fixed';
-overlay.style.top = '0';
-overlay.style.left = '0';
-overlay.style.width = '100%';
-overlay.style.height = '100%';
-overlay.style.background = 'radial-gradient(circle at center, #0a0a0a 0%, #000 100%)';
-overlay.style.display = 'flex';
-overlay.style.flexDirection = 'column';
-overlay.style.justifyContent = 'center';
-overlay.style.alignItems = 'center';
-overlay.style.zIndex = '99999';
-overlay.style.color = '#FFA500';
-overlay.style.fontFamily = 'Poppins, sans-serif';
-overlay.style.textAlign = 'center';
-overlay.style.padding = '20px';
-overlay.style.animation = 'fadeIn 1.2s ease forwards';
-overlay.style.boxShadow = 'inset 0 0 60px #FF8C00, 0 0 40px #FF8C00';
-
-// Add SVG icon (gear)
-const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-icon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-icon.setAttribute('viewBox', '0 0 24 24');
-icon.setAttribute('fill', 'none');
-icon.setAttribute('stroke', '#FFA500');
-icon.setAttribute('stroke-width', '2');
-icon.setAttribute('stroke-linecap', 'round');
-icon.setAttribute('stroke-linejoin', 'round');
-icon.style.width = '70px';
-icon.style.height = '70px';
-icon.style.marginBottom = '20px';
-icon.style.animation = 'spin 5s linear infinite';
-icon.innerHTML = `
-<circle cx="12" cy="12" r="3"></circle>
-<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>`;
-overlay.appendChild(icon);
-
-// Big title
-const title = document.createElement('div');
-title.textContent = 'Niam is updating this site';
-title.style.fontSize = '2.6rem';
-title.style.fontWeight = 'bold';
-title.style.marginBottom = '15px';
-title.style.animation = 'pulseGlow 2s infinite';
-overlay.appendChild(title);
-
-// Subtitle
-const subtitle = document.createElement('div');
-subtitle.innerHTML = `
-New and improved version launches <strong>10/31/25 • 8:00 PM</strong><br>
-<span style="font-size:1.1rem;opacity:0.8;">(or earlier if I’m cooking)</span>
+overlay.style.cssText = `
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 999999;
+  color: #FFA500;
+  font-family: 'Poppins', sans-serif;
+  text-align: center;
+  overflow: hidden;
+  animation: fadeIn 1s ease forwards;
 `;
-subtitle.style.fontSize = '1.5rem';
-subtitle.style.marginBottom = '25px';
-overlay.appendChild(subtitle);
 
-// Temp site link
-const link = document.createElement('a');
-link.href = 'https://issaquah-instructure-com.github.io/';
-link.target = '_blank';
-link.textContent = '→ Visit temporary site';
-link.style.color = '#FFA500';
-link.style.textDecoration = 'none';
-link.style.fontSize = '2rem';
-link.style.fontWeight = 'bold';
-link.style.padding = '10px 25px';
-link.style.border = '2px solid #FFA500';
-link.style.borderRadius = '15px';
-link.style.boxShadow = '0 0 20px #FF8C00';
-link.style.transition = 'all 0.3s ease';
-link.addEventListener('mouseover', () => {
-  link.style.color = '#000';
-  link.style.background = '#FFA500';
-  link.style.transform = 'scale(1.1)';
-});
-link.addEventListener('mouseout', () => {
-  link.style.color = '#FFA500';
-  link.style.background = 'transparent';
-  link.style.transform = 'scale(1)';
-});
-overlay.appendChild(link);
-
-// Add to page
-document.body.appendChild(overlay);
-
-// Animations
 const style = document.createElement('style');
-style.innerHTML = `
-@keyframes fadeIn {
-  from {opacity: 0;}
-  to {opacity: 1;}
-}
-@keyframes pulseGlow {
-  0%, 100% {text-shadow: 0 0 15px #FFA500, 0 0 30px #FF8C00;}
-  50% {text-shadow: 0 0 25px #FF8C00, 0 0 50px #FF4500;}
-}
-@keyframes spin {
-  0% {transform: rotate(0deg);}
-  100% {transform: rotate(360deg);}
-}
+style.textContent = `
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  @keyframes glowPulse { 0%,100% { filter: drop-shadow(0 0 10px #ff8c00); } 50% { filter: drop-shadow(0 0 25px #ff8c00); } }
 `;
 document.head.appendChild(style);
 
-// Play sound
-const audio = new Audio('wa.mp3');
-audio.play().catch(() => console.log('Audio blocked or failed to play'));
+// === Top GIF (swe.gif) ===
+const gifTop = document.createElement('div');
+gifTop.style.cssText = `
+  background: #111;
+  border: 2px solid #ff8c00;
+  border-radius: 20px;
+  padding: 10px;
+  box-shadow: 0 0 20px #ff8c00;
+  margin-bottom: 25px;
+  animation: floaty 4s ease-in-out infinite;
+`;
+
+const swe = document.createElement('img');
+swe.src = 'swe.gif';
+swe.alt = 'Construction';
+swe.style.cssText = `
+  width: 180px;
+  border-radius: 15px;
+  display: block;
+`;
+gifTop.appendChild(swe);
+overlay.appendChild(gifTop);
+
+// === Title Area with Jackhammer ===
+const titleContainer = document.createElement('div');
+titleContainer.style.cssText = `
+  display: flex;
+  align-items: flex-start; /* align top of jackhammer closer to text */
+  justify-content: center;
+  gap: -30px; /* move jackhammer left into the text */
+  margin-bottom: 15px;
+  position: relative;
+`;
+
+const title = document.createElement('h1');
+title.textContent = "Niam is rebuilding this site";
+title.style.cssText = `
+  font-size: 2.8rem;
+  margin: 0;
+  text-shadow: 0 0 20px #ff8c00;
+  color: #FFA500;
+`;
+
+// === Jackhammer GIF ===
+const jackhammer = document.createElement('img');
+jackhammer.src = 'swee.gif';
+jackhammer.alt = 'Jackhammer';
+jackhammer.style.cssText = `
+  width: 100px;
+  transform: rotate(-25deg);
+  margin-top: 10px; /* nudge down to overlap text */
+  filter: drop-shadow(0 0 20px #ff8c00);
+  animation: floaty 1.2s ease-in-out infinite;
+`;
+
+// === Append Title + Jackhammer ===
+titleContainer.append(title, jackhammer);
+overlay.appendChild(titleContainer);
+
+// === Info Text ===
+const info = document.createElement('p');
+info.innerHTML = `
+  Launch date: <b>11/3/25 @ 4:00PM</b><br>
+  Might drop earlier if I’m cooking<br><br>
+  <span style="opacity:0.8;">The rebuild’s taking longer — but it’ll be worth it.</span>
+`;
+info.style.cssText = `
+  font-size: 1rem;
+  margin: 10px 0 30px 0;
+`;
+overlay.appendChild(info);
+
+// === Links ===
+const tempLink = document.createElement('a');
+tempLink.href = "https://issaquah-instructure-com.github.io/";
+tempLink.textContent = "Visit Temporary Site";
+tempLink.style.cssText = `
+  color: #FFA500;
+  text-decoration: none;
+  font-weight: bold;
+  border: 2px solid #FFA500;
+  padding: 10px 20px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  display: inline-block;
+`;
+tempLink.onmouseover = () => tempLink.style.background = '#FFA50022';
+tempLink.onmouseout = () => tempLink.style.background = 'transparent';
+overlay.appendChild(tempLink);
+
+const launchLink = document.createElement('a');
+launchLink.href = "https://macvg2025.github.io/launch/watch/";
+launchLink.textContent = "Watch the Launch";
+launchLink.style.cssText = `
+  color: #FFA500;
+  text-decoration: none;
+  font-weight: bold;
+  margin-top: 20px;
+  display: inline-block;
+  transition: all 0.3s ease;
+`;
+launchLink.onmouseover = () => launchLink.style.textShadow = '0 0 10px #FFA500';
+launchLink.onmouseout = () => launchLink.style.textShadow = 'none';
+overlay.appendChild(launchLink);
+
+// === Add Overlay ===
+document.body.appendChild(overlay);
+
+// === Sound ===
+const audio = new Audio('ty.mp3');
+audio.play().catch(() => console.warn("Autoplay blocked — user interaction required."));
 
     </script>
 </body>
