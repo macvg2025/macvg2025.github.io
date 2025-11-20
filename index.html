@@ -26,164 +26,100 @@ iframe {
    <body>
       <iframe src="https://macvg2025.github.io/macvg"></iframe>
 <script>
-// === Overlay ===
-const overlay = document.createElement('div');
-overlay.style.cssText = `
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%);
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  z-index: 999999;
-  color: #FFA500;
-  font-family: 'Poppins', sans-serif;
-  overflow: hidden;
-  padding: 40px;
-`;
+// Create overlay
+const overlay = document.createElement("div");
+overlay.style.position = "fixed";
+overlay.style.top = 0;
+overlay.style.left = 0;
+overlay.style.width = "100vw";
+overlay.style.height = "100vh";
+overlay.style.background = "linear-gradient(135deg, #000428, #004e92)";
+overlay.style.zIndex = "999999999999";
+overlay.style.display = "flex";
+overlay.style.flexDirection = "column";
+overlay.style.alignItems = "center";
+overlay.style.justifyContent = "center";
+overlay.style.opacity = "0";
+overlay.style.transition = "opacity 0.6s ease-out";
+document.body.appendChild(overlay);
 
-// === CSS Styles ===
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-  @keyframes glowPulse { 0%,100% { text-shadow: 0 0 15px #ff8c00; } 50% { text-shadow: 0 0 35px #ff8c00; } }
+setTimeout(() => overlay.style.opacity = "1", 20);
 
-  .big-text {
-    font-size: 4rem;
-    font-weight: 400;
-    color: #FFA500;
-    animation: glowPulse 2s infinite;
-    text-align: left;
-  }
+// Wave text
+const title = document.createElement("div");
+title.style.display = "flex";
+title.style.gap = "6px";
+title.style.marginBottom = "30px";
+overlay.appendChild(title);
 
-  .info-text {
-    font-size: 1.2rem;
-    margin-top: 20px;
-    color: #FFA500cc;
-  }
+const text = "THE NEW SITE IS HERE!!!";
+[...text].forEach((ch, i) => {
+    const span = document.createElement("span");
+    span.innerText = ch;
+    span.style.color = "white";
+    span.style.fontSize = "4rem";
+    span.style.fontWeight = "900";
+    span.style.fontFamily = "Arial, sans-serif";
+    span.style.animation = `wave 1.2s ${i * 0.08}s infinite ease-in-out`;
+    title.appendChild(span);
+});
 
-  .links a { 
-    display: inline-block; 
-    margin-top: 20px; 
-    margin-right: 20px;
-    padding: 16px 28px; 
-    border-radius: 12px; 
-    background: #ff8c00; 
-    color: #111 !important; 
-    text-decoration: none; 
-    font-weight: 600; 
-    font-size: 1.5rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 0 20px #ff8c00;
-  }
-  .links a:hover { 
-    background: #ffa500; 
-    box-shadow: 0 0 35px #ff8c00;
-  }
+// Enter button (only one)
+const enter = document.createElement("div");
+enter.innerText = "Enter";
+enter.style.padding = "15px 50px";
+enter.style.fontSize = "2rem";
+enter.style.fontWeight = "700";
+enter.style.color = "#000";
+enter.style.background = "white";
+enter.style.borderRadius = "14px";
+enter.style.cursor = "pointer";
+enter.style.transition = "transform 0.2s";
+enter.onclick = () => window.location.href = "https://niamco.github.io/niamverse";
 
-  .gif-container img { 
-    width: 260px; 
-    border-radius: 20px; 
-    box-shadow: 0 0 35px #ff8c00; 
-    animation: floaty 4s ease-in-out infinite;
-  }
+enter.onmouseenter = () => enter.style.transform = "scale(1.12)";
+enter.onmouseleave = () => enter.style.transform = "scale(1)";
 
-  .gif-caption {
-    margin-top: 12px;
-    font-size: 1.1rem;
-    color: #FFA500;
-    text-shadow: 0 0 15px #ff8c00;
-    text-align: center;
-  }
+overlay.appendChild(enter);
 
-  .gear {
-    font-size: 6rem;
-    text-align: center;
-    width: 100%;
-    margin-bottom: 20px;
-    animation: glowPulse 2s infinite;
-  }
-
-  .text-container {
-    max-width: 650px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
+// CSS for wave + confetti
+const style = document.createElement("style");
+style.innerHTML = `
+@keyframes wave {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+}
+.confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    top: -20px;
+    border-radius: 2px;
+    opacity: 0.9;
+    z-index: 999999999999999;
+    animation: drop var(--t) linear forwards;
+}
+@keyframes drop {
+    to {
+        transform: translateY(110vh) rotate(720deg);
+        opacity: 0;
+    }
+}
 `;
 document.head.appendChild(style);
 
-// === GIF Left Side ===
-const gifContainer = document.createElement('div');
-gifContainer.className = 'gif-container';
-gifContainer.style.cssText = `
-  margin-right: 60px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
+// Confetti
+for (let i = 0; i < 200; i++) {
+    const c = document.createElement("div");
+    c.className = "confetti";
+    c.style.left = Math.random() * 100 + "vw";
+    c.style.background = `hsl(${Math.random() * 360}, 100%, 60%)`;
+    c.style.setProperty("--t", (0.7 + Math.random() * 1.4) + "s");
+    document.body.appendChild(c);
 
-const swe = document.createElement('img');
-swe.src = 'swe.gif';
-swe.alt = 'Construction';
-gifContainer.appendChild(swe);
+    setTimeout(() => c.remove(), 2000);
+}
 
-const caption = document.createElement('div');
-caption.className = 'gif-caption';
-caption.textContent = 'me at 3am';
-gifContainer.appendChild(caption);
-
-overlay.appendChild(gifContainer);
-
-// === Text Content ===
-const textContainer = document.createElement('div');
-textContainer.className = 'text-container';
-
-// Gear
-const gear = document.createElement('div');
-gear.className = 'gear';
-gear.textContent = '⚙️';
-textContainer.appendChild(gear);
-
-// Main Text
-const mainText = document.createElement('div');
-mainText.className = 'big-text';
-mainText.textContent = 'Under Construction';
-textContainer.appendChild(mainText);
-
-// Info Text
-const infoText = document.createElement('div');
-infoText.className = 'info-text';
-infoText.innerHTML = `
-  Launch date: <b>11/6/25 @ 8:00PM</b><br>
-  Might drop earlier if I’m cooking
-`;
-textContainer.appendChild(infoText);
-
-// Links
-const linksDiv = document.createElement('div');
-linksDiv.className = 'links';
-
-const tempLink = document.createElement('a');
-tempLink.href = "https://issaquah-instructure-com.github.io/";
-tempLink.textContent = "Visit Temporary Site";
-linksDiv.appendChild(tempLink);
-
-const launchLink = document.createElement('a');
-launchLink.href = "https://macvg2025.github.io/launch/watch/";
-launchLink.textContent = "Watch the Launch";
-linksDiv.appendChild(launchLink);
-
-textContainer.appendChild(linksDiv);
-overlay.appendChild(textContainer);
-
-// === Add Overlay ===
-document.body.appendChild(overlay);
-
-// === Sound ===
-const audio = new Audio('ty.mp3');
-audio.play().catch(() => console.warn("Autoplay blocked — user interaction required."));
 
 </script>
    </body>
